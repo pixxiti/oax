@@ -23,7 +23,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
     });
 
     it("should generate datetime validation", () => {
-      expect(clientCode).toContain("z.string().datetime()");
+      expect(clientCode).toContain("z.iso.datetime()");
     });
 
     it("should generate date validation", () => {
@@ -97,7 +97,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
     });
 
     it("should generate typed record for additionalProperties with schema", () => {
-      expect(clientCode).toContain("z.record(z.string())");
+      expect(clientCode).toContain("z.record(z.string(), z.string())");
     });
 
     it("should generate minProperties constraint", () => {
@@ -220,7 +220,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
       // Check that required fields don't have .optional()
       expect(clientCode).toMatch(/id:\s*z\.string\(\)\.uuid\(\)(?!.*\.optional)/);
       expect(clientCode).toMatch(/email:\s*z\.string\(\)\.email\(\)(?!.*\.optional)/);
-      expect(clientCode).toMatch(/createdAt:\s*z\.string\(\)\.datetime\(\)(?!.*\.optional)/);
+      expect(clientCode).toMatch(/createdAt:\s*z\.iso\.datetime\(\)(?!.*\.optional)/);
     });
 
     it("should make optional fields optional", () => {

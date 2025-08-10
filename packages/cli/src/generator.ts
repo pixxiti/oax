@@ -1,6 +1,6 @@
 import type { OpenAPIV3 } from "openapi-types";
 import prettier from "prettier";
-import { type ZodType, z } from "zod/v4";
+import { type ZodType, z } from "zod";
 
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
   try {
@@ -19,7 +19,7 @@ export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
 
   const schemaCode = generateSchemaCode(schemas);
   const operationsCode = generateOperationsCode(operations);
-  const code = `import { z } from 'zod/v4';
+  const code = `import { z } from 'zod';
 import { createClient as createRuntimeClient } from '@zoddy/core';
 
 ${schemaCode}
@@ -320,8 +320,7 @@ function generateStringSchema(schema: any): string {
   if (schema.format) {
     switch (schema.format) {
       case "date-time":
-        zodSchema += ".datetime()";
-        break;
+        return "z.iso.datetime()";
       case "date":
         zodSchema += ".date()";
         break;
@@ -458,13 +457,13 @@ function generateObjectSchema(schema: any): string {
       return "z.object({}).strict()";
     }
     if (schema.additionalProperties === true || schema.additionalProperties === undefined) {
-      return "z.record(z.any())";
+      return "z.record(z.string(), z.any())";
     }
     if (typeof schema.additionalProperties === "object") {
       const valueSchema = generateZodCodeFromSchema(schema.additionalProperties);
-      return `z.record(${valueSchema})`;
+      return `z.record(z.string(), ${valueSchema})`;
     }
-    return "z.record(z.any())";
+    return "z.record(z.string(), z.any())";
   }
 
   const properties = Object.entries(schema.properties)

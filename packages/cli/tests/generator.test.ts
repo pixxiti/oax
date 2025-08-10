@@ -32,7 +32,7 @@ describe("zoddy generator", () => {
     });
 
     it("should generate client code with correct imports", () => {
-      expect(clientCode).toContain('import { z } from "zod/v4"');
+      expect(clientCode).toContain('import { z } from "zod"');
       expect(clientCode).toContain(
         'import { createClient as createRuntimeClient } from "@zoddy/core"'
       );
@@ -97,6 +97,42 @@ describe("zoddy generator", () => {
       expect(clientCode).toContain("operationId:");
       expect(clientCode).toContain("parameters:");
       expect(clientCode).toContain("responses:");
+    });
+
+    it("should generate correct z.record syntax for additionalProperties", async () => {
+      // Create a test OAS with additionalProperties to verify z.record generation
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/inventory": {
+            get: {
+              operationId: "getInventory",
+              responses: {
+                "200": {
+                  description: "Success",
+                  content: {
+                    "application/json": {
+                      schema: {
+                        type: "object",
+                        additionalProperties: { type: "integer" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      };
+
+      const clientCode = await generateClient(testOAS);
+      
+      // Verify that z.record uses the correct two-parameter syntax
+      expect(clientCode).toContain("z.record(z.string(), z.number().int())");
+      // Ensure it doesn't use the old single-parameter syntax
+      expect(clientCode).not.toContain("z.record(z.number().int())");
+      expect(clientCode).not.toContain("z.record(z.any())");
     });
   });
 });
