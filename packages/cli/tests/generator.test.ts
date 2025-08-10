@@ -115,19 +115,19 @@ describe("zoddy generator", () => {
                     "application/json": {
                       schema: {
                         type: "object",
-                        additionalProperties: { type: "integer" }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+                        additionalProperties: { type: "integer" },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       };
 
       const clientCode = await generateClient(testOAS);
-      
+
       // Verify that z.record uses the correct two-parameter syntax
       expect(clientCode).toContain("z.record(z.string(), z.number().int())");
       // Ensure it doesn't use the old single-parameter syntax

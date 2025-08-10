@@ -39,7 +39,7 @@ export type Operations = Record<string, Operation>;
 type InferOperationParams<T extends Operation> =
   T["parameters"] extends readonly OperationParameter[]
     ? T["parameters"] extends readonly []
-      ? {}
+      ? Record<string, never>
       : {
           [P in T["parameters"][number] as P["name"]]: P["required"] extends true
             ? P["schema"] extends { _output: infer O }
@@ -49,7 +49,7 @@ type InferOperationParams<T extends Operation> =
               ? O | undefined
               : any | undefined;
         }
-    : {};
+    : Record<string, never>;
 
 type InferOperationBody<T extends Operation> = T["requestBody"] extends OperationRequestBody
   ? T["requestBody"]["required"] extends true
@@ -142,11 +142,11 @@ export class ApiClient {
     const contentType = response.headers.get("content-type");
     if (contentType?.includes("application/json")) {
       return response.json();
-    } else if (response.status === 204 || !operation.responses["200"]?.schema) {
-      return;
-    } else {
-      return response.text();
     }
+    if (response.status === 204 || !operation.responses["200"]?.schema) {
+      return;
+    }
+    return response.text();
   }
 
   // Dynamic method creation - operations will be bound at runtime
@@ -168,7 +168,7 @@ export function createClient<T extends Operations>(
   }
 
   // remove request from return
-  delete (client as any).request;
+  (client as any).request = undefined;
 
   return client as TypedClient<T>;
 }
