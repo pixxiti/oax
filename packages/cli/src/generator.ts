@@ -5,9 +5,7 @@ import { type ZodType, z } from "zod/v4";
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
   try {
     const SwaggerParser = await import("@apidevtools/swagger-parser");
-    const api = (await SwaggerParser.default.validate(
-      filePath
-    )) as OpenAPIV3.Document;
+    const api = (await SwaggerParser.default.validate(filePath)) as OpenAPIV3.Document;
     return api;
   } catch (error) {
     console.error("Error parsing OAS file:", error);
@@ -93,23 +91,14 @@ function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
   for (const [pathTemplate, pathItem] of Object.entries(oas.paths)) {
     if (!pathItem) continue;
 
-    const methods = [
-      "get",
-      "post",
-      "put",
-      "delete",
-      "patch",
-      "head",
-      "options",
-    ] as const;
+    const methods = ["get", "post", "put", "delete", "patch", "head", "options"] as const;
 
     for (const method of methods) {
       const operation = (pathItem as any)[method] as OpenAPIV3.OperationObject;
       if (!operation) continue;
 
       const operationId =
-        operation.operationId ||
-        `${method}${pathTemplate.replace(/[^a-zA-Z0-9]/g, "")}`;
+        operation.operationId || `${method}${pathTemplate.replace(/[^a-zA-Z0-9]/g, "")}`;
 
       const parameters: ParameterInfo[] = [];
       if (operation.parameters) {
@@ -175,8 +164,7 @@ function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
       };
 
       if (operation.summary) operationInfo.summary = operation.summary;
-      if (operation.description)
-        operationInfo.description = operation.description;
+      if (operation.description) operationInfo.description = operation.description;
 
       if (requestBody) {
         operationInfo.requestBody = requestBody;
@@ -276,9 +264,7 @@ function generateZodCodeFromSchema(schema: any): string {
       return schemas[0];
     }
     return schemas.reduce((acc: string, curr: string, index: number) =>
-      index === 1
-        ? `z.intersection(${acc}, ${curr})`
-        : `z.intersection(${acc}, ${curr})`
+      index === 1 ? `z.intersection(${acc}, ${curr})` : `z.intersection(${acc}, ${curr})`
     );
   }
 
@@ -373,9 +359,7 @@ function generateStringSchema(schema: any): string {
   }
   if (schema.pattern) {
     // Escape the regex pattern for JavaScript string
-    const escapedPattern = schema.pattern
-      .replace(/\\/g, "\\\\")
-      .replace(/"/g, '\\"');
+    const escapedPattern = schema.pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     zodSchema += `.regex(new RegExp("${escapedPattern}"))`;
   }
 
@@ -393,10 +377,7 @@ function generateNumberSchema(schema: any): string {
       zodSchema += `.gte(${schema.minimum})`;
     }
   }
-  if (
-    schema.exclusiveMinimum !== undefined &&
-    typeof schema.exclusiveMinimum === "number"
-  ) {
+  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === "number") {
     zodSchema += `.gt(${schema.exclusiveMinimum})`;
   }
   if (schema.maximum !== undefined) {
@@ -406,10 +387,7 @@ function generateNumberSchema(schema: any): string {
       zodSchema += `.lte(${schema.maximum})`;
     }
   }
-  if (
-    schema.exclusiveMaximum !== undefined &&
-    typeof schema.exclusiveMaximum === "number"
-  ) {
+  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === "number") {
     zodSchema += `.lt(${schema.exclusiveMaximum})`;
   }
   if (schema.multipleOf !== undefined) {
@@ -430,10 +408,7 @@ function generateIntegerSchema(schema: any): string {
       zodSchema += `.gte(${schema.minimum})`;
     }
   }
-  if (
-    schema.exclusiveMinimum !== undefined &&
-    typeof schema.exclusiveMinimum === "number"
-  ) {
+  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === "number") {
     zodSchema += `.gt(${schema.exclusiveMinimum})`;
   }
   if (schema.maximum !== undefined) {
@@ -443,10 +418,7 @@ function generateIntegerSchema(schema: any): string {
       zodSchema += `.lte(${schema.maximum})`;
     }
   }
-  if (
-    schema.exclusiveMaximum !== undefined &&
-    typeof schema.exclusiveMaximum === "number"
-  ) {
+  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === "number") {
     zodSchema += `.lt(${schema.exclusiveMaximum})`;
   }
   if (schema.multipleOf !== undefined) {
@@ -485,16 +457,11 @@ function generateObjectSchema(schema: any): string {
     if (schema.additionalProperties === false) {
       return "z.object({}).strict()";
     }
-    if (
-      schema.additionalProperties === true ||
-      schema.additionalProperties === undefined
-    ) {
+    if (schema.additionalProperties === true || schema.additionalProperties === undefined) {
       return "z.record(z.any())";
     }
     if (typeof schema.additionalProperties === "object") {
-      const valueSchema = generateZodCodeFromSchema(
-        schema.additionalProperties
-      );
+      const valueSchema = generateZodCodeFromSchema(schema.additionalProperties);
       return `z.record(${valueSchema})`;
     }
     return "z.record(z.any())";
