@@ -1,0 +1,36 @@
+{
+  "name": "@zoddy/cli",
+  "version": "1.0.0",
+  "description": "CLI tool for generating typed API clients from OpenAPI specifications",
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "zoddy": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "biome lint src",
+    "lint:fix": "biome lint --write src",
+    "format": "biome format --write src"
+  },
+  "keywords": ["openapi", "cli", "codegen", "typescript", "zod"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apidevtools/swagger-parser": "^10.1.0",
+    "commander": "^12.1.0",
+    "openapi-types": "^12.1.3",
+    "prettier": "^3.3.3",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

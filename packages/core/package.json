@@ -1,0 +1,40 @@
+{
+  "name": "@zoddy/core",
+  "version": "1.0.0",
+  "description": "Runtime API client wrapper for generated zoddy clients",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "biome lint src",
+    "lint:fix": "biome lint --write src",
+    "format": "biome format --write src"
+  },
+  "keywords": ["api-client", "http", "typescript", "ky", "zod", "runtime"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ky": "^1.7.2"
+  },
+  "peerDependencies": {
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.5.0",
+    "zod": "^3.24.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
