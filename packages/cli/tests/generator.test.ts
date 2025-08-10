@@ -18,7 +18,7 @@ describe("zoddy generator", () => {
     });
 
     it("should throw error for invalid OAS file", async () => {
-      await expect(parseOAS("nonexistent.json")).rejects.toThrow();
+      await expect(parseOAS(path.resolve(__dirname, "nonexistent.json"))).rejects.toThrow();
     });
   });
 
