@@ -77,12 +77,16 @@ import {
   createKyValidationHooks, 
   ValidationError 
 } from '@zoddy/core';
+import { createClient } from './generated-client';
 
 const helpers = createValidationHelpers();
 const hooks = createKyValidationHooks(helpers);
 
-// Use with custom ky instance
-const customKy = ky.create({
+// Extend existing client with custom hooks
+const client = createClient('https://api.example.com', {
+  validate: false // Turns off all validation
+});
+const customClient = client.extend({
   hooks: {
     beforeRequest: [hooks.beforeRequest],
     afterResponse: [hooks.afterResponse]
