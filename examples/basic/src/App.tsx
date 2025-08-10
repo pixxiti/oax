@@ -1,25 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
+import type { z } from "zod/v4";
 import { createClient } from "@zoddy/core";
-import { operations } from "./api/client";
+import { operations, type schemas } from "./api/client";
 import "./App.css";
 
 // Create typed client with full type safety
 const client = createClient("https://petstore.swagger.io/v2", operations);
 
-interface Pet {
-  id?: number;
-  category?: {
-    id?: number;
-    name?: string;
-  };
-  name: string;
-  photoUrls: string[];
-  tags?: Array<{
-    id?: number;
-    name?: string;
-  }>;
-  status?: "available" | "pending" | "sold";
-}
+type Pet = z.infer<typeof schemas.Pet>;
 
 function App() {
   const [pet, setPet] = useState<Pet | null>(null);
@@ -56,8 +44,7 @@ function App() {
     <div className="app">
       <h1>🐾 Zoddy Petstore Demo</h1>
       <p>
-        This demo showcases <strong>full type safety</strong> with
-        OpenAPI-generated clients
+        This demo showcases <strong>full type safety</strong> with OpenAPI-generated clients
       </p>
 
       <div className="controls">
@@ -92,8 +79,7 @@ function App() {
               <strong>ID:</strong> {pet.id}
             </p>
             <p>
-              <strong>Status:</strong>{" "}
-              <span className={`status ${pet.status}`}>{pet.status}</span>
+              <strong>Status:</strong> <span className={`status ${pet.status}`}>{pet.status}</span>
             </p>
             {pet.category && (
               <p>
