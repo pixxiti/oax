@@ -1,5 +1,5 @@
 import type { OpenAPIV3 } from "openapi-types";
-import { z, type ZodSchema } from "zod";
+import { z, type ZodType } from "zod/v4";
 import prettier from "prettier";
 
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
@@ -21,7 +21,7 @@ export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
 
   const schemaCode = generateSchemaCode(schemas);
   const operationsCode = generateOperationsCode(operations);
-  const code = `import { z } from 'zod';
+  const code = `import { z } from 'zod/v4';
 import { createClient as createRuntimeClient } from '@zoddy/core';
 
 ${schemaCode}
@@ -39,7 +39,7 @@ export { schemas, operations };`;
 
 interface ZodSchemaInfo {
   name: string;
-  schema: ZodSchema;
+  schema: ZodType;
   zodCode: string;
 }
 
