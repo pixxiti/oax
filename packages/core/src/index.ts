@@ -162,9 +162,8 @@ export function createClient<T extends Operations>(
 
   // Add typed methods for each operation
   for (const [operationId] of Object.entries(operations)) {
-    (client as any)[operationId] = function (params?: any, body?: any) {
-      return client.request(operationId, params, body);
-    };
+    (client as any)[operationId] = (params?: any, body?: any) =>
+      client.request(operationId, params, body);
   }
 
   // remove request from return

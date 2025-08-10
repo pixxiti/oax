@@ -37,8 +37,8 @@
         "useNodejsImportProtocol": "off"
       },
       "suspicious": {
-        "noExplicitAny": "warn",
-        "noImplicitAnyLet": "warn"
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off"
       },
       "correctness": {
         "useExhaustiveDependencies": "warn"

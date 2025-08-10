@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { parseOAS, generateClient } from "../src/generator.js";
 import path from "path";
 import type { OpenAPIV3 } from "openapi-types";
+import { beforeAll, describe, expect, it } from "vitest";
+import { generateClient, parseOAS } from "../src/generator.js";
 
 describe("Comprehensive OAS 3.0 Features", () => {
   const testFixturePath = path.resolve(__dirname, "fixtures/comprehensive.json");

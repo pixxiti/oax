@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-import { Command } from "commander";
-import { parseOAS, generateClient } from "./generator.js";
-import fs from "fs/promises";
 import path from "path";
+import { Command } from "commander";
+import fs from "fs/promises";
+import { generateClient, parseOAS } from "./generator.js";
 
 const program = new Command();
 

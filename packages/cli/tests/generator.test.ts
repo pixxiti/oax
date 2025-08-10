@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeAll } from "vitest";
-import { parseOAS, generateClient } from "../src/generator.js";
 import path from "path";
 import type { OpenAPIV3 } from "openapi-types";
+import { beforeAll, describe, expect, it } from "vitest";
+import { generateClient, parseOAS } from "../src/generator.js";
 
 describe("zoddy generator", () => {
   const testFixturePath = path.resolve(__dirname, "fixtures/petstore.json");
@@ -53,9 +53,7 @@ describe("zoddy generator", () => {
 
     it("should generate createClient function", () => {
       expect(clientCode).toContain("export function createClient");
-      expect(clientCode).toContain(
-        "createRuntimeClient(baseUrl, operations, options)"
-      );
+      expect(clientCode).toContain("createRuntimeClient(baseUrl, operations, options)");
     });
 
     it("should handle enums correctly", () => {

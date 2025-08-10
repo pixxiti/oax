@@ -1,13 +1,11 @@
 import type { OpenAPIV3 } from "openapi-types";
-import { z, type ZodType } from "zod/v4";
 import prettier from "prettier";
+import { type ZodType, z } from "zod/v4";
 
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
   try {
     const SwaggerParser = await import("@apidevtools/swagger-parser");
-    const api = (await SwaggerParser.default.validate(
-      filePath
-    )) as OpenAPIV3.Document;
+    const api = (await SwaggerParser.default.validate(filePath)) as OpenAPIV3.Document;
     return api;
   } catch (error) {
     console.error("Error parsing OAS file:", error);
@@ -94,23 +92,14 @@ function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
   for (const [pathTemplate, pathItem] of Object.entries(oas.paths)) {
     if (!pathItem) continue;
 
-    const methods = [
-      "get",
-      "post",
-      "put",
-      "delete",
-      "patch",
-      "head",
-      "options",
-    ] as const;
+    const methods = ["get", "post", "put", "delete", "patch", "head", "options"] as const;
 
     for (const method of methods) {
       const operation = (pathItem as any)[method] as OpenAPIV3.OperationObject;
       if (!operation) continue;
 
       const operationId =
-        operation.operationId ||
-        `${method}${pathTemplate.replace(/[^a-zA-Z0-9]/g, "")}`;
+        operation.operationId || `${method}${pathTemplate.replace(/[^a-zA-Z0-9]/g, "")}`;
 
       const parameters: ParameterInfo[] = [];
       if (operation.parameters) {
@@ -176,8 +165,7 @@ function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
       };
 
       if (operation.summary) operationInfo.summary = operation.summary;
-      if (operation.description)
-        operationInfo.description = operation.description;
+      if (operation.description) operationInfo.description = operation.description;
 
       if (requestBody) {
         operationInfo.requestBody = requestBody;
@@ -276,7 +264,7 @@ function generateZodCodeFromSchema(schema: any): string {
     if (schemas.length === 1) {
       return schemas[0];
     }
-    return schemas.reduce((acc: string, curr: string, index: number) => 
+    return schemas.reduce((acc: string, curr: string, index: number) =>
       index === 1 ? `z.intersection(${acc}, ${curr})` : `z.intersection(${acc}, ${curr})`
     );
   }
@@ -298,7 +286,7 @@ function generateZodCodeFromSchema(schema: any): string {
   // Handle nullable
   const isNullable = schema.nullable === true;
   const baseSchema = generateBaseZodSchema(schema);
-  
+
   return isNullable ? `${baseSchema}.nullable()` : baseSchema;
 }
 
@@ -372,7 +360,7 @@ function generateStringSchema(schema: any): string {
   }
   if (schema.pattern) {
     // Escape the regex pattern for JavaScript string
-    const escapedPattern = schema.pattern.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    const escapedPattern = schema.pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     zodSchema += `.regex(new RegExp("${escapedPattern}"))`;
   }
 
@@ -390,7 +378,7 @@ function generateNumberSchema(schema: any): string {
       zodSchema += `.gte(${schema.minimum})`;
     }
   }
-  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === 'number') {
+  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === "number") {
     zodSchema += `.gt(${schema.exclusiveMinimum})`;
   }
   if (schema.maximum !== undefined) {
@@ -400,7 +388,7 @@ function generateNumberSchema(schema: any): string {
       zodSchema += `.lte(${schema.maximum})`;
     }
   }
-  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === 'number') {
+  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === "number") {
     zodSchema += `.lt(${schema.exclusiveMaximum})`;
   }
   if (schema.multipleOf !== undefined) {
@@ -421,7 +409,7 @@ function generateIntegerSchema(schema: any): string {
       zodSchema += `.gte(${schema.minimum})`;
     }
   }
-  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === 'number') {
+  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === "number") {
     zodSchema += `.gt(${schema.exclusiveMinimum})`;
   }
   if (schema.maximum !== undefined) {
@@ -431,7 +419,7 @@ function generateIntegerSchema(schema: any): string {
       zodSchema += `.lte(${schema.maximum})`;
     }
   }
-  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === 'number') {
+  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === "number") {
     zodSchema += `.lt(${schema.exclusiveMaximum})`;
   }
   if (schema.multipleOf !== undefined) {
@@ -473,7 +461,7 @@ function generateObjectSchema(schema: any): string {
     if (schema.additionalProperties === true || schema.additionalProperties === undefined) {
       return "z.record(z.any())";
     }
-    if (typeof schema.additionalProperties === 'object') {
+    if (typeof schema.additionalProperties === "object") {
       const valueSchema = generateZodCodeFromSchema(schema.additionalProperties);
       return `z.record(${valueSchema})`;
     }
@@ -485,12 +473,12 @@ function generateObjectSchema(schema: any): string {
       const isRequired = schema.required?.includes(name) || false;
       const zodCode = generateZodCodeFromSchema(prop);
       const optionalSuffix = isRequired ? "" : ".optional()";
-      
+
       // Handle deprecated properties with description
       if (prop.deprecated === true) {
         return `${name}: ${zodCode}${optionalSuffix} /* @deprecated */`;
       }
-      
+
       return `${name}: ${zodCode}${optionalSuffix}`;
     })
     .join(", ");
@@ -502,7 +490,7 @@ function generateObjectSchema(schema: any): string {
     zodSchema += ".strict()";
   } else if (schema.additionalProperties === true) {
     zodSchema += ".passthrough()";
-  } else if (typeof schema.additionalProperties === 'object') {
+  } else if (typeof schema.additionalProperties === "object") {
     // This is more complex - Zod doesn't directly support typed additional properties
     // We'll use passthrough() and add a comment
     zodSchema += ".passthrough() /* additional properties allowed */";
