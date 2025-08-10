@@ -264,50 +264,257 @@ function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
 function generateZodCodeFromSchema(schema: any): string {
   if (!schema) return "z.any()";
 
+  // Handle $ref
   if ("$ref" in schema) {
     const refName = schema.$ref.split("/").pop();
     return refName || "z.any()";
   }
 
+  // Handle composition operators (allOf, anyOf, oneOf)
+  if (schema.allOf) {
+    const schemas = schema.allOf.map((s: any) => generateZodCodeFromSchema(s));
+    if (schemas.length === 1) {
+      return schemas[0];
+    }
+    return schemas.reduce((acc: string, curr: string, index: number) => 
+      index === 1 ? `z.intersection(${acc}, ${curr})` : `z.intersection(${acc}, ${curr})`
+    );
+  }
+
+  if (schema.anyOf) {
+    const schemas = schema.anyOf.map((s: any) => generateZodCodeFromSchema(s));
+    return `z.union([${schemas.join(", ")}])`;
+  }
+
+  if (schema.oneOf) {
+    const schemas = schema.oneOf.map((s: any) => generateZodCodeFromSchema(s));
+    // Handle discriminated unions if discriminator is present
+    if (schema.discriminator) {
+      return `z.discriminatedUnion("${schema.discriminator.propertyName}", [${schemas.join(", ")}])`;
+    }
+    return `z.union([${schemas.join(", ")}])`;
+  }
+
+  // Handle nullable
+  const isNullable = schema.nullable === true;
+  const baseSchema = generateBaseZodSchema(schema);
+  
+  return isNullable ? `${baseSchema}.nullable()` : baseSchema;
+}
+
+function generateBaseZodSchema(schema: any): string {
   switch (schema.type) {
     case "string":
-      if (schema.enum) {
-        return `z.enum([${schema.enum.map((v: string) => `'${v}'`).join(", ")}])`;
-      }
-      if (schema.format === "date-time") {
-        return "z.string().datetime()";
-      }
-      return "z.string()";
-
+      return generateStringSchema(schema);
     case "number":
-      return "z.number()";
-
+      return generateNumberSchema(schema);
     case "integer":
-      return "z.number().int()";
-
+      return generateIntegerSchema(schema);
     case "boolean":
       return "z.boolean()";
-
     case "array":
-      if (schema.items) {
-        return `z.array(${generateZodCodeFromSchema(schema.items)})`;
-      }
-      return "z.array(z.any())";
-
+      return generateArraySchema(schema);
     case "object":
-      if (schema.properties) {
-        const properties = Object.entries(schema.properties)
-          .map(([name, prop]: [string, any]) => {
-            const isRequired = schema.required?.includes(name) || false;
-            const zodCode = generateZodCodeFromSchema(prop);
-            return `${name}: ${zodCode}${isRequired ? "" : ".optional()"}`;
-          })
-          .join(", ");
-        return `z.object({ ${properties} })`;
-      }
-      return "z.record(z.any())";
-
+      return generateObjectSchema(schema);
     default:
       return "z.any()";
   }
+}
+
+function generateStringSchema(schema: any): string {
+  let zodSchema = "z.string()";
+
+  // Handle enums
+  if (schema.enum) {
+    return `z.enum([${schema.enum.map((v: string) => `'${v}'`).join(", ")}])`;
+  }
+
+  // Handle string formats
+  if (schema.format) {
+    switch (schema.format) {
+      case "date-time":
+        zodSchema += ".datetime()";
+        break;
+      case "date":
+        zodSchema += ".date()";
+        break;
+      case "time":
+        zodSchema += ".time()";
+        break;
+      case "email":
+        zodSchema += ".email()";
+        break;
+      case "uri":
+      case "url":
+        zodSchema += ".url()";
+        break;
+      case "uuid":
+        zodSchema += ".uuid()";
+        break;
+      case "ipv4":
+        zodSchema += ".ip({ version: 'v4' })";
+        break;
+      case "ipv6":
+        zodSchema += ".ip({ version: 'v6' })";
+        break;
+      default:
+        // Keep as string for unknown formats
+        break;
+    }
+  }
+
+  // Handle string constraints
+  if (schema.minLength !== undefined) {
+    zodSchema += `.min(${schema.minLength})`;
+  }
+  if (schema.maxLength !== undefined) {
+    zodSchema += `.max(${schema.maxLength})`;
+  }
+  if (schema.pattern) {
+    // Escape the regex pattern for JavaScript string
+    const escapedPattern = schema.pattern.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    zodSchema += `.regex(new RegExp("${escapedPattern}"))`;
+  }
+
+  return zodSchema;
+}
+
+function generateNumberSchema(schema: any): string {
+  let zodSchema = "z.number()";
+
+  // Handle number constraints
+  if (schema.minimum !== undefined) {
+    if (schema.exclusiveMinimum === true) {
+      zodSchema += `.gt(${schema.minimum})`;
+    } else {
+      zodSchema += `.gte(${schema.minimum})`;
+    }
+  }
+  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === 'number') {
+    zodSchema += `.gt(${schema.exclusiveMinimum})`;
+  }
+  if (schema.maximum !== undefined) {
+    if (schema.exclusiveMaximum === true) {
+      zodSchema += `.lt(${schema.maximum})`;
+    } else {
+      zodSchema += `.lte(${schema.maximum})`;
+    }
+  }
+  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === 'number') {
+    zodSchema += `.lt(${schema.exclusiveMaximum})`;
+  }
+  if (schema.multipleOf !== undefined) {
+    zodSchema += `.multipleOf(${schema.multipleOf})`;
+  }
+
+  return zodSchema;
+}
+
+function generateIntegerSchema(schema: any): string {
+  let zodSchema = "z.number().int()";
+
+  // Handle integer constraints (same as number)
+  if (schema.minimum !== undefined) {
+    if (schema.exclusiveMinimum === true) {
+      zodSchema += `.gt(${schema.minimum})`;
+    } else {
+      zodSchema += `.gte(${schema.minimum})`;
+    }
+  }
+  if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === 'number') {
+    zodSchema += `.gt(${schema.exclusiveMinimum})`;
+  }
+  if (schema.maximum !== undefined) {
+    if (schema.exclusiveMaximum === true) {
+      zodSchema += `.lt(${schema.maximum})`;
+    } else {
+      zodSchema += `.lte(${schema.maximum})`;
+    }
+  }
+  if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === 'number') {
+    zodSchema += `.lt(${schema.exclusiveMaximum})`;
+  }
+  if (schema.multipleOf !== undefined) {
+    zodSchema += `.multipleOf(${schema.multipleOf})`;
+  }
+
+  return zodSchema;
+}
+
+function generateArraySchema(schema: any): string {
+  let itemSchema = "z.any()";
+  if (schema.items) {
+    itemSchema = generateZodCodeFromSchema(schema.items);
+  }
+
+  let zodSchema = `z.array(${itemSchema})`;
+
+  // Handle array constraints
+  if (schema.minItems !== undefined) {
+    zodSchema += `.min(${schema.minItems})`;
+  }
+  if (schema.maxItems !== undefined) {
+    zodSchema += `.max(${schema.maxItems})`;
+  }
+  if (schema.uniqueItems === true) {
+    // Zod doesn't have built-in uniqueItems, but we can use a custom refinement
+    zodSchema = `${zodSchema}.refine((items) => new Set(items).size === items.length, { message: "Items must be unique" })`;
+  }
+
+  return zodSchema;
+}
+
+function generateObjectSchema(schema: any): string {
+  if (!schema.properties) {
+    // Handle additionalProperties for record-like objects
+    if (schema.additionalProperties === false) {
+      return "z.object({}).strict()";
+    }
+    if (schema.additionalProperties === true || schema.additionalProperties === undefined) {
+      return "z.record(z.any())";
+    }
+    if (typeof schema.additionalProperties === 'object') {
+      const valueSchema = generateZodCodeFromSchema(schema.additionalProperties);
+      return `z.record(${valueSchema})`;
+    }
+    return "z.record(z.any())";
+  }
+
+  const properties = Object.entries(schema.properties)
+    .map(([name, prop]: [string, any]) => {
+      const isRequired = schema.required?.includes(name) || false;
+      const zodCode = generateZodCodeFromSchema(prop);
+      const optionalSuffix = isRequired ? "" : ".optional()";
+      
+      // Handle deprecated properties with description
+      if (prop.deprecated === true) {
+        return `${name}: ${zodCode}${optionalSuffix} /* @deprecated */`;
+      }
+      
+      return `${name}: ${zodCode}${optionalSuffix}`;
+    })
+    .join(", ");
+
+  let zodSchema = `z.object({ ${properties} })`;
+
+  // Handle additionalProperties
+  if (schema.additionalProperties === false) {
+    zodSchema += ".strict()";
+  } else if (schema.additionalProperties === true) {
+    zodSchema += ".passthrough()";
+  } else if (typeof schema.additionalProperties === 'object') {
+    // This is more complex - Zod doesn't directly support typed additional properties
+    // We'll use passthrough() and add a comment
+    zodSchema += ".passthrough() /* additional properties allowed */";
+  }
+
+  // Handle object constraints
+  if (schema.minProperties !== undefined) {
+    zodSchema = `${zodSchema}.refine((obj) => Object.keys(obj).length >= ${schema.minProperties}, { message: "Object must have at least ${schema.minProperties} properties" })`;
+  }
+  if (schema.maxProperties !== undefined) {
+    zodSchema = `${zodSchema}.refine((obj) => Object.keys(obj).length <= ${schema.maxProperties}, { message: "Object must have at most ${schema.maxProperties} properties" })`;
+  }
+
+  return zodSchema;
 }

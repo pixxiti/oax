@@ -1,0 +1,289 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Comprehensive OAS 3.0 Test API",
+    "version": "1.0.0",
+    "description": "Tests all OAS 3.0 features with Zod generation"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1"
+    }
+  ],
+  "paths": {
+    "/users": {
+      "post": {
+        "operationId": "createUser",
+        "summary": "Create a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/profile": {
+      "get": {
+        "operationId": "getUserProfile",
+        "summary": "Get user profile",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Profile"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "User": {
+        "type": "object",
+        "required": ["id", "email", "createdAt"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique user identifier"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "User email address"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 20,
+            "pattern": "^[a-zA-Z0-9_]+$",
+            "description": "Username (optional)"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 13,
+            "maximum": 120,
+            "description": "User age"
+          },
+          "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "multipleOf": 0.1,
+            "description": "User score"
+          },
+          "isActive": {
+            "type": "boolean",
+            "description": "Whether user is active"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["admin", "user", "guest"],
+            "description": "User role"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 0,
+            "maxItems": 10,
+            "uniqueItems": true,
+            "description": "User tags"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Additional metadata"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "User creation timestamp"
+          },
+          "lastLoginDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Last login date (nullable)"
+          },
+          "website": {
+            "type": "string",
+            "format": "uri",
+            "description": "User website"
+          },
+          "ipAddress": {
+            "type": "string",
+            "format": "ipv4",
+            "description": "User IP address"
+          },
+          "legacyField": {
+            "type": "string",
+            "deprecated": true,
+            "description": "Legacy field (deprecated)"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateUserRequest": {
+        "type": "object",
+        "required": ["email"],
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 20,
+            "pattern": "^[a-zA-Z0-9_]+$"
+          },
+          "age": {
+            "type": "integer",
+            "minimum": 13,
+            "maximum": 120
+          }
+        }
+      },
+      "Profile": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BasicProfile"
+          },
+          {
+            "$ref": "#/components/schemas/PremiumProfile"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "basic": "#/components/schemas/BasicProfile",
+            "premium": "#/components/schemas/PremiumProfile"
+          }
+        }
+      },
+      "BasicProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseProfile"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["basic"]
+              }
+            }
+          }
+        ]
+      },
+      "PremiumProfile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseProfile"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["premium"]
+              },
+              "premiumFeatures": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "BaseProfile": {
+        "type": "object",
+        "required": ["displayName"],
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "bio": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "SearchFilter": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "email": {
+                "type": "string",
+                "format": "email"
+              }
+            }
+          }
+        ]
+      },
+      "Configuration": {
+        "type": "object",
+        "minProperties": 1,
+        "maxProperties": 10,
+        "additionalProperties": true,
+        "properties": {
+          "theme": {
+            "type": "string",
+            "enum": ["light", "dark"]
+          }
+        }
+      }
+    }
+  }
+}
