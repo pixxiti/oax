@@ -258,7 +258,7 @@ describe("Integration Tests", () => {
       };
 
       try {
-        await client.addPet({}, invalidPet);
+        await client.addPet(invalidPet);
         expect.fail("Should have thrown ValidationError");
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);

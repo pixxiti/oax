@@ -219,7 +219,7 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
 type InferOperationParams<T extends Operation> =
   T["parameters"] extends readonly OperationParameter[]
     ? T["parameters"] extends readonly []
-      ? Record<string, never>
+      ? never
       : {
           [P in T["parameters"][number] as P["name"]]: P["required"] extends true
             ? P["schema"] extends { _output: infer O }
@@ -229,7 +229,7 @@ type InferOperationParams<T extends Operation> =
               ? O | undefined
               : any | undefined;
         }
-    : Record<string, never>;
+    : never;
 
 type InferOperationBody<T extends Operation> = T["requestBody"] extends OperationRequestBody
   ? T["requestBody"]["required"] extends true
@@ -241,12 +241,44 @@ type InferOperationBody<T extends Operation> = T["requestBody"] extends Operatio
       : any | undefined
   : never;
 
-type InferOperationResponse<T extends Operation> = T["responses"] extends Record<string, any>
-  ? T["responses"]["200"] extends OperationResponse
-    ? T["responses"]["200"]["schema"] extends { _output: infer O }
-      ? O
+// Helper to find the first 2xx success response
+type FindSuccessResponse<T extends Record<string, any>> = {
+  [K in keyof T]: K extends `2${string}` 
+    ? T[K] extends OperationResponse
+      ? T[K]["schema"] extends { _output: infer O }
+        ? O
+        : any
       : any
-    : any
+    : never;
+}[keyof T] extends never
+  ? // If no 2xx found, try to get any response schema
+    {
+      [K in keyof T]: T[K] extends OperationResponse
+        ? T[K]["schema"] extends { _output: infer O }
+          ? O
+          : any
+        : any;
+    }[keyof T] extends never
+    ? any
+    : {
+      [K in keyof T]: T[K] extends OperationResponse
+        ? T[K]["schema"] extends { _output: infer O }
+          ? O
+          : any
+        : any;
+    }[keyof T]
+  : {
+      [K in keyof T]: K extends `2${string}` 
+        ? T[K] extends OperationResponse
+          ? T[K]["schema"] extends { _output: infer O }
+            ? O
+            : any
+          : any
+        : never;
+    }[keyof T];
+
+type InferOperationResponse<T extends Operation> = T["responses"] extends Record<string, any>
+  ? FindSuccessResponse<T["responses"]>
   : any;
 
 // Type utilities for accessing types by operation ID
@@ -261,7 +293,7 @@ export type ParamsById<T extends Operations, K extends keyof T> = T[K] extends O
 export type QueriesById<T extends Operations, K extends keyof T> = T[K] extends Operation
   ? T[K]["parameters"] extends readonly OperationParameter[]
     ? T[K]["parameters"] extends readonly []
-      ? Record<string, never>
+      ? never
       : {
           [P in T[K]["parameters"][number] as P["in"] extends "query" ? P["name"] : never]: P["required"] extends true
             ? P["schema"] extends { _output: infer O }
@@ -270,8 +302,18 @@ export type QueriesById<T extends Operations, K extends keyof T> = T[K] extends 
             : P["schema"] extends { _output: infer O }
               ? O | undefined
               : any | undefined;
+        } extends Record<string, never>
+        ? never
+        : {
+          [P in T[K]["parameters"][number] as P["in"] extends "query" ? P["name"] : never]: P["required"] extends true
+            ? P["schema"] extends { _output: infer O }
+              ? O
+              : any
+            : P["schema"] extends { _output: infer O }
+              ? O | undefined
+              : any | undefined;
         }
-    : Record<string, never>
+    : never
   : never;
 
 export type ResponseById<T extends Operations, K extends keyof T> = T[K] extends Operation
@@ -281,7 +323,17 @@ export type ResponseById<T extends Operations, K extends keyof T> = T[K] extends
 export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends Operation
   ? T[K]["responses"] extends Record<string, any>
     ? {
-        [StatusCode in keyof T[K]["responses"]]: StatusCode extends "200"
+        [StatusCode in keyof T[K]["responses"]]: StatusCode extends `2${string}`
+          ? never
+          : T[K]["responses"][StatusCode] extends OperationResponse
+            ? T[K]["responses"][StatusCode]["schema"] extends { _output: infer O }
+              ? O
+              : any
+            : any;
+      } extends Record<string, never>
+      ? never
+      : {
+        [StatusCode in keyof T[K]["responses"]]: StatusCode extends `2${string}`
           ? never
           : T[K]["responses"][StatusCode] extends OperationResponse
             ? T[K]["responses"][StatusCode]["schema"] extends { _output: infer O }
@@ -289,17 +341,19 @@ export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends O
               : any
             : any;
       }
-    : Record<string, never>
+    : never
   : never;
 
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
-    ? T[K]["requestBody"] extends OperationRequestBody
-      ? (
-          params: InferOperationParams<T[K]>,
-          body: InferOperationBody<T[K]>
-        ) => Promise<InferOperationResponse<T[K]>>
+  ? T[K]["requestBody"] extends OperationRequestBody
+      ? InferOperationParams<T[K]> extends never
+        ? (body: InferOperationBody<T[K]>) => Promise<InferOperationResponse<T[K]>>
+        : (
+            params: InferOperationParams<T[K]>,
+            body: InferOperationBody<T[K]>
+          ) => Promise<InferOperationResponse<T[K]>>
       : T[K]["parameters"] extends readonly OperationParameter[]
         ? T[K]["parameters"] extends readonly []
           ? () => Promise<InferOperationResponse<T[K]>>
@@ -417,9 +471,15 @@ export function createClient<T extends Operations>(
   const client = new ApiClient(baseUrl, operations, options);
 
   // Add typed methods for each operation
-  for (const [operationId] of Object.entries(operations)) {
-    (client as any)[operationId] = (params?: any, body?: any) =>
-      client.request(operationId, params, body);
+  for (const [operationId, operation] of Object.entries(operations)) {
+    (client as any)[operationId] = (paramsOrBody?: any, body?: any) => {
+      // If operation has requestBody but no parameters, treat first arg as body
+      if (operation.requestBody && (!operation.parameters || operation.parameters.length === 0)) {
+        return client.request(operationId, undefined, paramsOrBody);
+      }
+      // Otherwise, treat args as (params, body)
+      return client.request(operationId, paramsOrBody, body);
+    };
   }
 
   return client as TypedClient<T>;
