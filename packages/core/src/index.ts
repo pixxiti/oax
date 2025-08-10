@@ -28,7 +28,7 @@ export interface Operation {
   operationId: string;
   summary?: string;
   description?: string;
-  parameters: OperationParameter[];
+  parameters: readonly OperationParameter[];
   requestBody?: OperationRequestBody;
   responses: Record<string, OperationResponse>;
 }
@@ -103,7 +103,8 @@ export class ApiClient {
       throw new Error(`Operation ${operationId} not found`);
     }
 
-    let url = operation.path;
+    // Remove leading slash for ky prefixUrl compatibility
+    let url = operation.path.startsWith("/") ? operation.path.slice(1) : operation.path;
     const searchParams = new URLSearchParams();
     const headers: Record<string, string> = {};
 
