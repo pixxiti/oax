@@ -249,6 +249,49 @@ type InferOperationResponse<T extends Operation> = T["responses"] extends Record
     : any
   : any;
 
+// Type utilities for accessing types by operation ID
+export type BodyById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? InferOperationBody<T[K]>
+  : never;
+
+export type ParamsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? InferOperationParams<T[K]>
+  : never;
+
+export type QueriesById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? T[K]["parameters"] extends readonly OperationParameter[]
+    ? T[K]["parameters"] extends readonly []
+      ? Record<string, never>
+      : {
+          [P in T[K]["parameters"][number] as P["in"] extends "query" ? P["name"] : never]: P["required"] extends true
+            ? P["schema"] extends { _output: infer O }
+              ? O
+              : any
+            : P["schema"] extends { _output: infer O }
+              ? O | undefined
+              : any | undefined;
+        }
+    : Record<string, never>
+  : never;
+
+export type ResponseById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? InferOperationResponse<T[K]>
+  : never;
+
+export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? T[K]["responses"] extends Record<string, any>
+    ? {
+        [StatusCode in keyof T[K]["responses"]]: StatusCode extends "200"
+          ? never
+          : T[K]["responses"][StatusCode] extends OperationResponse
+            ? T[K]["responses"][StatusCode]["schema"] extends { _output: infer O }
+              ? O
+              : any
+            : any;
+      }
+    : Record<string, never>
+  : never;
+
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
