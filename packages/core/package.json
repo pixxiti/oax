@@ -15,10 +15,12 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"Error: no test specified\" && exit 0",
-    "lint": "biome lint src",
-    "lint:fix": "biome lint --write src",
-    "format": "biome format --write src"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "biome lint src tests",
+    "lint:fix": "biome lint --write src tests",
+    "format": "biome format --write src tests"
   },
   "keywords": ["api-client", "http", "typescript", "ky", "zod", "runtime"],
   "author": "",
@@ -32,6 +34,7 @@
   "devDependencies": {
     "@types/node": "^22.5.0",
     "typescript": "^5.5.0",
+    "vitest": "^2.1.0",
     "zod": "^4.0.17"
   },
   "engines": {

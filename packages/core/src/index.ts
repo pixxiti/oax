@@ -1,8 +1,10 @@
 import ky from "ky";
+import type { ZodError, ZodType } from "zod";
 
 export interface ClientOptions {
   baseUrl: string;
   headers?: Record<string, string>;
+  validate?: boolean;
 }
 
 export interface OperationParameter {
@@ -34,6 +36,176 @@ export interface Operation {
 }
 
 export type Operations = Record<string, Operation>;
+
+export class ValidationError extends Error {
+  constructor(
+    public readonly type: "request" | "response",
+    public readonly operation: string,
+    public readonly zodError: ZodError,
+    public readonly data: unknown
+  ) {
+    super(`${type === "request" ? "Request" : "Response"} validation failed for operation ${operation}`);
+    this.name = "ValidationError";
+  }
+
+  toConsoleString(): string {
+    const prefix = this.type === "request" ? "🚫 Request" : "⚠️ Response";
+    const lines = [
+      `${prefix} validation error in operation: ${this.operation}`,
+      "",
+      "Validation errors:",
+    ];
+    
+    for (const issue of this.zodError.issues) {
+      const path = issue.path.length > 0 ? issue.path.join(".") : "root";
+      lines.push(`  • ${path}: ${issue.message}`);
+    }
+    
+    lines.push("");
+    lines.push(`Data received: ${JSON.stringify(this.data, null, 2)}`);
+    
+    return lines.join("\n");
+  }
+}
+
+export interface ValidationHelpers {
+  validateRequestParams?: (params: unknown, operation: Operation) => unknown;
+  validateRequestBody?: (body: unknown, operation: Operation) => unknown;
+  validateResponseData?: (data: unknown, operation: Operation, status?: string) => unknown;
+}
+
+export function createValidationHelpers(): ValidationHelpers {
+  return {
+    validateRequestParams: (params: unknown, operation: Operation) => {
+      if (!params || !operation.parameters || operation.parameters.length === 0) {
+        return params;
+      }
+
+      const validationErrors: ZodError["issues"] = [];
+      
+      for (const param of operation.parameters) {
+        if (param.schema && typeof param.schema === "object" && "safeParse" in param.schema) {
+          const value = (params as any)?.[param.name];
+          
+          // Only validate if parameter is required OR if it's optional but provided
+          if (param.required || value !== undefined) {
+            const result = (param.schema as ZodType).safeParse(value);
+            
+            if (!result.success) {
+              for (const issue of result.error.issues) {
+                validationErrors.push({
+                  ...issue,
+                  path: [param.name, ...issue.path],
+                });
+              }
+            }
+          }
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        const zodError = { issues: validationErrors } as ZodError;
+        throw new ValidationError("request", operation.operationId, zodError, params);
+      }
+
+      return params;
+    },
+
+    validateRequestBody: (body: unknown, operation: Operation) => {
+      if (!body || !operation.requestBody?.schema) {
+        return body;
+      }
+
+      const schema = operation.requestBody.schema;
+      if (typeof schema === "object" && "safeParse" in schema) {
+        const result = (schema as ZodType).safeParse(body);
+        if (!result.success) {
+          throw new ValidationError("request", operation.operationId, result.error, body);
+        }
+        return result.data;
+      }
+
+      return body;
+    },
+
+    validateResponseData: (data: unknown, operation: Operation, status = "200") => {
+      const response = operation.responses[status];
+      if (!response?.schema) {
+        return data;
+      }
+
+      const schema = response.schema;
+      if (typeof schema === "object" && "safeParse" in schema) {
+        const result = (schema as ZodType).safeParse(data);
+        if (!result.success) {
+          throw new ValidationError("response", operation.operationId, result.error, data);
+        }
+        return result.data;
+      }
+
+      return data;
+    },
+  };
+}
+
+export interface KyValidationHooks {
+  beforeRequest: (request: Request, options: any, operation?: Operation) => Request;
+  afterResponse: (request: Request, options: any, response: Response, operation?: Operation) => Response | Promise<Response>;
+}
+
+export function createKyValidationHooks(helpers: ValidationHelpers): KyValidationHooks {
+  return {
+    beforeRequest: (request, options, operation) => {
+      if (!operation || !helpers.validateRequestParams || !helpers.validateRequestBody) return request;
+
+      try {
+        if ((options as any).params) {
+          helpers.validateRequestParams((options as any).params, operation);
+        }
+        
+        const contentType = request.headers.get("content-type");
+        if ((options as any).json && contentType?.includes("application/json")) {
+          helpers.validateRequestBody((options as any).json, operation);
+        }
+      } catch (error) {
+        if (error instanceof ValidationError) {
+          console.error(error.toConsoleString());
+          throw error;
+        }
+        throw error;
+      }
+      
+      return request;
+    },
+    
+    afterResponse: async (request, options, response, operation) => {
+      if (!operation || !helpers.validateResponseData) return response;
+
+      const contentType = response.headers.get("content-type");
+      if (contentType?.includes("application/json")) {
+        const clonedResponse = response.clone();
+        try {
+          const data = await clonedResponse.json();
+          try {
+            helpers.validateResponseData(data, operation, String(response.status));
+          } catch (validationError) {
+            if (validationError instanceof ValidationError) {
+              console.error(validationError.toConsoleString());
+              throw validationError;
+            }
+            // Other validation errors - return response gracefully
+            return response;
+          }
+        } catch (jsonError) {
+          // JSON parsing error - return response gracefully without logging
+          return response;
+        }
+      }
+      
+      return response;
+    },
+  };
+}
 
 // Type helpers for operation inference
 type InferOperationParams<T extends Operation> =
@@ -70,7 +242,7 @@ type InferOperationResponse<T extends Operation> = T["responses"] extends Record
   : any;
 
 // Create typed client interface based on operations
-type TypedClient<T extends Operations> = ApiClient & {
+type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
     ? T[K]["requestBody"] extends OperationRequestBody
       ? (
@@ -86,15 +258,43 @@ type TypedClient<T extends Operations> = ApiClient & {
 };
 
 export class ApiClient {
-  private ky: typeof ky;
+  public readonly ky: typeof ky;
   private operations: Operations;
+  private validationHelpers?: ValidationHelpers;
 
   constructor(baseUrl: string, operations: Operations, options?: Omit<ClientOptions, "baseUrl">) {
     this.operations = operations;
-    this.ky = ky.create({
-      prefixUrl: baseUrl,
-      ...(options?.headers && { headers: options.headers }),
-    });
+    
+    const shouldValidate = options?.validate !== false;
+
+    if (shouldValidate) {
+      this.validationHelpers = createValidationHelpers();
+      const hooks = createKyValidationHooks(this.validationHelpers);
+      
+      this.ky = ky.create({
+        prefixUrl: baseUrl,
+        ...(options?.headers && { headers: options.headers }),
+        hooks: {
+          beforeRequest: [
+            (request, options) => {
+              const operation = (options as any).operation as Operation;
+              return hooks.beforeRequest?.(request, options, operation) ?? request;
+            }
+          ],
+          afterResponse: [
+            (request, options, response) => {
+              const operation = (options as any).operation as Operation;
+              return hooks.afterResponse?.(request, options, response, operation) ?? response;
+            }
+          ]
+        }
+      });
+    } else {
+      this.ky = ky.create({
+        prefixUrl: baseUrl,
+        ...(options?.headers && { headers: options.headers }),
+      });
+    }
   }
 
   async request(operationId: string, params?: any, body?: any): Promise<any> {
@@ -130,10 +330,14 @@ export class ApiClient {
       method: operation.method.toUpperCase(),
       headers,
       searchParams,
+      operation, // Pass operation to hooks
+      params, // Pass params for validation
     };
 
     if (body && operation.requestBody) {
       requestOptions.json = body;
+      // Set content-type header for JSON requests
+      headers["content-type"] = "application/json";
     }
 
     const response = await this.ky(url, requestOptions);
@@ -166,9 +370,6 @@ export function createClient<T extends Operations>(
     (client as any)[operationId] = (params?: any, body?: any) =>
       client.request(operationId, params, body);
   }
-
-  // remove request from return
-  (client as any).request = undefined;
 
   return client as TypedClient<T>;
 }

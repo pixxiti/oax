@@ -41,7 +41,8 @@
         "noImplicitAnyLet": "off"
       },
       "correctness": {
-        "useExhaustiveDependencies": "warn"
+        "useExhaustiveDependencies": "warn",
+        "useImportExtensions": "off"
       }
     }
   },
