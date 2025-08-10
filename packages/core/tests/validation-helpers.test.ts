@@ -16,17 +16,17 @@ describe("createValidationHelpers", () => {
 
   // Type assertion helpers for tests since we know these methods exist
   const assertValidateRequestParams = (helpers: ValidationHelpers) => {
-    if (!helpers.validateRequestParams) throw new Error('validateRequestParams should exist');
+    if (!helpers.validateRequestParams) throw new Error("validateRequestParams should exist");
     return helpers.validateRequestParams;
   };
-  
+
   const assertValidateRequestBody = (helpers: ValidationHelpers) => {
-    if (!helpers.validateRequestBody) throw new Error('validateRequestBody should exist');
+    if (!helpers.validateRequestBody) throw new Error("validateRequestBody should exist");
     return helpers.validateRequestBody;
   };
-  
+
   const assertValidateResponseData = (helpers: ValidationHelpers) => {
-    if (!helpers.validateResponseData) throw new Error('validateResponseData should exist');
+    if (!helpers.validateResponseData) throw new Error("validateResponseData should exist");
     return helpers.validateResponseData;
   };
 
@@ -157,7 +157,7 @@ describe("createValidationHelpers", () => {
     it("should include parameter name in validation error path", () => {
       const params = {
         id: "", // empty string fails z.string().min(1) for authorization
-        authorization: "", 
+        authorization: "",
       };
 
       try {
@@ -167,9 +167,9 @@ describe("createValidationHelpers", () => {
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
-        expect(validationError.zodError.issues.some(issue => 
-          issue.path.includes("authorization")
-        )).toBe(true);
+        expect(
+          validationError.zodError.issues.some((issue) => issue.path.includes("authorization"))
+        ).toBe(true);
       }
     });
   });
@@ -199,7 +199,7 @@ describe("createValidationHelpers", () => {
     it("should validate valid request body successfully", () => {
       const body = {
         name: "John Doe",
-        email: "john@example.com", 
+        email: "john@example.com",
         age: 30,
       };
 
@@ -270,7 +270,7 @@ describe("createValidationHelpers", () => {
 
       const result = assertValidateRequestBody(helpers)(body, operation);
       expect(result).toEqual({
-        name: "John Doe", 
+        name: "John Doe",
         email: "john@example.com",
         age: 30,
       });
@@ -280,7 +280,7 @@ describe("createValidationHelpers", () => {
   describe("validateResponseData", () => {
     const operation: Operation = {
       operationId: "getUser",
-      method: "get", 
+      method: "get",
       path: "/users/{id}",
       parameters: [],
       requestBody: undefined,
@@ -327,7 +327,7 @@ describe("createValidationHelpers", () => {
     it("should throw ValidationError for invalid response data", () => {
       const data = {
         id: "user123",
-        name: "John Doe", 
+        name: "John Doe",
         email: "invalid-email", // fails email validation
       };
 

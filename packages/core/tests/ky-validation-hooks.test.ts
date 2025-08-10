@@ -121,7 +121,7 @@ describe("createKyValidationHooks", () => {
 
     it("should return request unchanged when no params provided", () => {
       mockOptions.params = undefined;
-      
+
       const result = hooks.beforeRequest(mockRequest, mockOptions, mockOperation);
       expect(result).toBe(mockRequest);
       expect(consoleSpy).not.toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe("createKyValidationHooks", () => {
 
     it("should return request unchanged when no body provided", () => {
       mockOptions.body = undefined;
-      
+
       const result = hooks.beforeRequest(mockRequest, mockOptions, mockOperation);
       expect(result).toBe(mockRequest);
       expect(consoleSpy).not.toHaveBeenCalled();
@@ -183,7 +183,7 @@ describe("createKyValidationHooks", () => {
     beforeEach(() => {
       mockRequest = new Request("https://api.example.com/test");
       mockOptions = {};
-      
+
       // Mock a successful response
       const mockResponseData = {
         id: "response123",
@@ -209,7 +209,12 @@ describe("createKyValidationHooks", () => {
       const emptyHelpers: ValidationHelpers = {};
       const emptyHooks = createKyValidationHooks(emptyHelpers);
 
-      const result = await emptyHooks.afterResponse(mockRequest, mockOptions, mockResponse, mockOperation);
+      const result = await emptyHooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        mockResponse,
+        mockOperation
+      );
       expect(result).toBe(mockResponse);
       expect(consoleSpy).not.toHaveBeenCalled();
     });
@@ -220,16 +225,26 @@ describe("createKyValidationHooks", () => {
         headers: { "content-type": "text/plain" },
       });
 
-      const result = await hooks.afterResponse(mockRequest, mockOptions, textResponse, mockOperation);
+      const result = await hooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        textResponse,
+        mockOperation
+      );
       expect(result).toBe(textResponse);
       expect(consoleSpy).not.toHaveBeenCalled();
     });
 
     it("should handle JSON response validation asynchronously", async () => {
       // This test verifies the async validation behavior
-      const result = await hooks.afterResponse(mockRequest, mockOptions, mockResponse, mockOperation);
+      const result = await hooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        mockResponse,
+        mockOperation
+      );
       expect(result).toBe(mockResponse);
-      
+
       // No error should be logged for valid response
       expect(consoleSpy).not.toHaveBeenCalled();
     });
@@ -247,9 +262,14 @@ describe("createKyValidationHooks", () => {
 
       vi.spyOn(invalidResponse, "json").mockResolvedValue(invalidResponseData);
 
-      const result = await hooks.afterResponse(mockRequest, mockOptions, invalidResponse, mockOperation);
+      const result = await hooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        invalidResponse,
+        mockOperation
+      );
       expect(result).toBe(invalidResponse);
-      
+
       // Validation error should be logged
       expect(consoleSpy).toHaveBeenCalled();
     });
@@ -262,9 +282,14 @@ describe("createKyValidationHooks", () => {
 
       vi.spyOn(invalidJsonResponse, "json").mockRejectedValue(new Error("JSON parse error"));
 
-      const result = await hooks.afterResponse(mockRequest, mockOptions, invalidJsonResponse, mockOperation);
+      const result = await hooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        invalidJsonResponse,
+        mockOperation
+      );
       expect(result).toBe(invalidJsonResponse);
-      
+
       // Should not crash, no validation error logged since JSON parsing failed first
       expect(consoleSpy).not.toHaveBeenCalled();
     });
@@ -278,7 +303,12 @@ describe("createKyValidationHooks", () => {
       };
       const errorHooks = createKyValidationHooks(errorHelpers);
 
-      const result = await errorHooks.afterResponse(mockRequest, mockOptions, mockResponse, mockOperation);
+      const result = await errorHooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        mockResponse,
+        mockOperation
+      );
       expect(result).toBe(mockResponse);
 
       expect(consoleSpy).toHaveBeenCalled();
@@ -293,7 +323,12 @@ describe("createKyValidationHooks", () => {
       };
       const errorHooks = createKyValidationHooks(errorHelpers);
 
-      const result = await errorHooks.afterResponse(mockRequest, mockOptions, mockResponse, mockOperation);
+      const result = await errorHooks.afterResponse(
+        mockRequest,
+        mockOptions,
+        mockResponse,
+        mockOperation
+      );
       expect(result).toBe(mockResponse);
 
       // Regular errors should also be handled gracefully
@@ -307,7 +342,7 @@ describe("createKyValidationHooks", () => {
       const realHooks = createKyValidationHooks(realHelpers);
 
       const mockRequest = new Request("https://api.example.com/test", {
-        method: "POST", 
+        method: "POST",
         headers: { "content-type": "application/json" },
       });
 

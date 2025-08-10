@@ -44,7 +44,9 @@ export class ValidationError extends Error {
     public readonly zodError: ZodError,
     public readonly data: unknown
   ) {
-    super(`${type === "request" ? "Request" : "Response"} validation failed for operation ${operation}`);
+    super(
+      `${type === "request" ? "Request" : "Response"} validation failed for operation ${operation}`
+    );
     this.name = "ValidationError";
   }
 
@@ -55,15 +57,15 @@ export class ValidationError extends Error {
       "",
       "Validation errors:",
     ];
-    
+
     for (const issue of this.zodError.issues) {
       const path = issue.path.length > 0 ? issue.path.join(".") : "root";
       lines.push(`  • ${path}: ${issue.message}`);
     }
-    
+
     lines.push("");
     lines.push(`Data received: ${JSON.stringify(this.data, null, 2)}`);
-    
+
     return lines.join("\n");
   }
 }
@@ -82,15 +84,15 @@ export function createValidationHelpers(): ValidationHelpers {
       }
 
       const validationErrors: ZodError["issues"] = [];
-      
+
       for (const param of operation.parameters) {
         if (param.schema && typeof param.schema === "object" && "safeParse" in param.schema) {
           const value = (params as any)?.[param.name];
-          
+
           // Only validate if parameter is required OR if it's optional but provided
           if (param.required || value !== undefined) {
             const result = (param.schema as ZodType).safeParse(value);
-            
+
             if (!result.success) {
               for (const issue of result.error.issues) {
                 validationErrors.push({
@@ -150,19 +152,25 @@ export function createValidationHelpers(): ValidationHelpers {
 
 export interface KyValidationHooks {
   beforeRequest: (request: Request, options: any, operation?: Operation) => Request;
-  afterResponse: (request: Request, options: any, response: Response, operation?: Operation) => Response | Promise<Response>;
+  afterResponse: (
+    request: Request,
+    options: any,
+    response: Response,
+    operation?: Operation
+  ) => Response | Promise<Response>;
 }
 
 export function createKyValidationHooks(helpers: ValidationHelpers): KyValidationHooks {
   return {
     beforeRequest: (request, options, operation) => {
-      if (!operation || !helpers.validateRequestParams || !helpers.validateRequestBody) return request;
+      if (!operation || !helpers.validateRequestParams || !helpers.validateRequestBody)
+        return request;
 
       try {
         if ((options as any).params) {
           helpers.validateRequestParams((options as any).params, operation);
         }
-        
+
         const contentType = request.headers.get("content-type");
         if ((options as any).json && contentType?.includes("application/json")) {
           helpers.validateRequestBody((options as any).json, operation);
@@ -174,10 +182,10 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
         }
         throw error;
       }
-      
+
       return request;
     },
-    
+
     afterResponse: async (request, options, response, operation) => {
       if (!operation || !helpers.validateResponseData) return response;
 
@@ -201,7 +209,7 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
           return response;
         }
       }
-      
+
       return response;
     },
   };
@@ -264,13 +272,13 @@ export class ApiClient {
 
   constructor(baseUrl: string, operations: Operations, options?: Omit<ClientOptions, "baseUrl">) {
     this.operations = operations;
-    
+
     const shouldValidate = options?.validate !== false;
 
     if (shouldValidate) {
       this.validationHelpers = createValidationHelpers();
       const hooks = createKyValidationHooks(this.validationHelpers);
-      
+
       this.ky = ky.create({
         prefixUrl: baseUrl,
         ...(options?.headers && { headers: options.headers }),
@@ -279,15 +287,15 @@ export class ApiClient {
             (request, options) => {
               const operation = (options as any).operation as Operation;
               return hooks.beforeRequest?.(request, options, operation) ?? request;
-            }
+            },
           ],
           afterResponse: [
             (request, options, response) => {
               const operation = (options as any).operation as Operation;
               return hooks.afterResponse?.(request, options, response, operation) ?? response;
-            }
-          ]
-        }
+            },
+          ],
+        },
       });
     } else {
       this.ky = ky.create({

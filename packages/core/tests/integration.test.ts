@@ -24,26 +24,26 @@ vi.mock("ky", () => {
 
   (mockKy as any).create = vi.fn().mockImplementation((config: any) => {
     currentHooks = config.hooks;
-    
+
     const instanceKy = vi.fn().mockImplementation(async (url: string, options: any) => {
       // Simulate beforeRequest hooks
       if (currentHooks?.beforeRequest) {
         const request = new Request(`https://example.com/${url}`, {
-          method: options.method || 'GET',
+          method: options.method || "GET",
           headers: options.headers || {},
           body: options.json ? JSON.stringify(options.json) : undefined,
         });
-        
+
         for (const hook of currentHooks.beforeRequest) {
           hook(request, options);
         }
       }
-      
+
       // Check if mockKy has been overridden for this test
       if (mockKy.getMockImplementation()) {
         return mockKy(url, options);
       }
-      
+
       // Return default response - individual tests will override this
       return {
         json: vi.fn().mockResolvedValue({}),
@@ -52,10 +52,10 @@ vi.mock("ky", () => {
         headers: new Map([["content-type", "application/json"]]),
       };
     });
-    
+
     return instanceKy;
   });
-  
+
   (mockKy as any).extend = vi.fn().mockReturnValue(mockKy);
 
   return {
@@ -65,7 +65,6 @@ vi.mock("ky", () => {
 
 describe("Integration Tests", () => {
   let consoleSpy: any;
-
 
   const petStoreOperations = {
     getPetById: {
@@ -86,16 +85,22 @@ describe("Integration Tests", () => {
           description: "successful operation",
           schema: z.object({
             id: z.number().int().positive(),
-            category: z.object({
-              id: z.number().int().positive(),
-              name: z.string(),
-            }).optional(),
+            category: z
+              .object({
+                id: z.number().int().positive(),
+                name: z.string(),
+              })
+              .optional(),
             name: z.string(),
             photoUrls: z.array(z.string()),
-            tags: z.array(z.object({
-              id: z.number().int().positive(),
-              name: z.string(),
-            })).optional(),
+            tags: z
+              .array(
+                z.object({
+                  id: z.number().int().positive(),
+                  name: z.string(),
+                })
+              )
+              .optional(),
             status: z.enum(["available", "pending", "sold"]).optional(),
           }),
         },
@@ -117,16 +122,22 @@ describe("Integration Tests", () => {
       requestBody: {
         schema: z.object({
           id: z.number().int().positive().optional(),
-          category: z.object({
-            id: z.number().int().positive(),
-            name: z.string(),
-          }).optional(),
+          category: z
+            .object({
+              id: z.number().int().positive(),
+              name: z.string(),
+            })
+            .optional(),
           name: z.string().min(1),
           photoUrls: z.array(z.string()),
-          tags: z.array(z.object({
-            id: z.number().int().positive(),
-            name: z.string(),
-          })).optional(),
+          tags: z
+            .array(
+              z.object({
+                id: z.number().int().positive(),
+                name: z.string(),
+              })
+            )
+            .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
         }),
         required: true,
@@ -209,9 +220,12 @@ describe("Integration Tests", () => {
       const result = await client.getPetById({ petId: 123 });
 
       expect(result).toEqual(mockPetData);
-      expect(ky.default).toHaveBeenCalledWith("pet/123", expect.objectContaining({
-        method: "GET",
-      }));
+      expect(ky.default).toHaveBeenCalledWith(
+        "pet/123",
+        expect.objectContaining({
+          method: "GET",
+        })
+      );
       expect(consoleSpy).not.toHaveBeenCalled();
     });
 
@@ -333,10 +347,13 @@ describe("Integration Tests", () => {
       });
 
       // Verify URL construction and parameter handling
-      expect(ky.default).toHaveBeenCalledWith("pet/123", expect.objectContaining({
-        method: "POST",
-        searchParams: expect.any(URLSearchParams),
-      }));
+      expect(ky.default).toHaveBeenCalledWith(
+        "pet/123",
+        expect.objectContaining({
+          method: "POST",
+          searchParams: expect.any(URLSearchParams),
+        })
+      );
 
       const call = (ky.default as any).mock.calls[0];
       const searchParams = call[1].searchParams as URLSearchParams;
@@ -398,7 +415,11 @@ describe("Integration Tests", () => {
         name: "Fluffy",
         photoUrls: ["url1"],
       };
-      const result3 = helpers.validateResponseData?.(validResponse, petStoreOperations.getPetById, "200");
+      const result3 = helpers.validateResponseData?.(
+        validResponse,
+        petStoreOperations.getPetById,
+        "200"
+      );
       expect(result3).toEqual(validResponse);
     });
   });
@@ -473,11 +494,14 @@ describe("Integration Tests", () => {
       const helpers = createValidationHelpers();
 
       try {
-        helpers.validateRequestBody?.({
-          name: "",
-          photoUrls: "not-array",
-          invalidField: true,
-        }, petStoreOperations.addPet);
+        helpers.validateRequestBody?.(
+          {
+            name: "",
+            photoUrls: "not-array",
+            invalidField: true,
+          },
+          petStoreOperations.addPet
+        );
         expect.fail("Should have thrown ValidationError");
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);

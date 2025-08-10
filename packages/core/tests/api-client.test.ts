@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import {
-  ApiClient,
-  type Operations,
-  createClient,
-} from "../src/index";
+import { ApiClient, type Operations, createClient } from "../src/index";
 
 // Mock ky for testing
 vi.mock("ky", () => {
@@ -58,7 +54,7 @@ const mockOperations: Operations = {
     },
   },
   createUser: {
-    operationId: "createUser", 
+    operationId: "createUser",
     method: "post",
     path: "/users",
     parameters: [],
@@ -83,7 +79,7 @@ const mockOperations: Operations = {
   },
   simpleGet: {
     operationId: "simpleGet",
-    method: "get", 
+    method: "get",
     path: "/simple",
     parameters: [],
     requestBody: undefined,
@@ -130,7 +126,7 @@ describe("ApiClient", () => {
     it("should handle ky.create call correctly for validation", async () => {
       const ky = await import("ky");
       new ApiClient("https://api.example.com", mockOperations);
-      
+
       expect(ky.default.create).toHaveBeenCalledWith({
         prefixUrl: "https://api.example.com",
         hooks: {
@@ -148,7 +144,7 @@ describe("createClient", () => {
 
     expect(client).toBeInstanceOf(ApiClient);
     expect(typeof client.getUser).toBe("function");
-    expect(typeof client.createUser).toBe("function"); 
+    expect(typeof client.createUser).toBe("function");
     expect(typeof client.simpleGet).toBe("function");
     expect(typeof client.ky).toBe("function"); // request method should be available
   });
@@ -173,7 +169,7 @@ describe("createClient", () => {
       headers: new Map([["content-type", "application/json"]]),
       status: 200,
     };
-    
+
     (ky.default as any).mockResolvedValue(mockResponse);
 
     const client = createClient("https://api.example.com", mockOperations);
@@ -200,13 +196,13 @@ describe("createClient", () => {
         headers: new Map([["content-type", "application/json"]]),
         status: 200,
       };
-      
+
       (ky.default as any).mockResolvedValue(mockResponse);
 
       const client = createClient("https://api.example.com", mockOperations);
-      
+
       const result = await client.ky("custom-endpoint");
-      
+
       expect(result).toBe(mockResponse);
       expect(ky.default).toHaveBeenCalledWith("custom-endpoint");
     });
