@@ -85,8 +85,6 @@ const hooks = createKyValidationHooks(helpers);
 // Extend existing client with custom hooks
 const client = createClient('https://api.example.com', {
   validate: false // Turns off all validation
-});
-const customClient = client.extend({
   hooks: {
     beforeRequest: [hooks.beforeRequest],
     afterResponse: [hooks.afterResponse]

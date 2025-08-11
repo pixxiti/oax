@@ -1,10 +1,12 @@
-import ky from "ky";
+import ky, { type Hooks } from "ky";
 import type { ZodError, ZodType } from "zod";
 
 export interface ClientOptions {
   baseUrl: string;
   headers?: Record<string, string>;
   validate?: boolean;
+  hooks?: Hooks;
+  validationHelpers?: ValidationHelpers;
 }
 
 export interface OperationParameter {
@@ -364,6 +366,9 @@ type TypedClient<T extends Operations> = {
           : (params: InferOperationParams<T[K]>) => Promise<InferOperationResponse<T[K]>>
         : () => Promise<InferOperationResponse<T[K]>>
     : never;
+} & {
+  ky: typeof ky;
+  request: (operationId: string, params?: any, body?: any) => Promise<any>;
 };
 
 export class ApiClient {
@@ -373,37 +378,41 @@ export class ApiClient {
 
   constructor(baseUrl: string, operations: Operations, options?: Omit<ClientOptions, "baseUrl">) {
     this.operations = operations;
+    this.headers = options?.headers ?? {};
 
     const shouldValidate = options?.validate !== false;
 
-    if (shouldValidate) {
-      this.validationHelpers = createValidationHelpers();
-      const hooks = createKyValidationHooks(this.validationHelpers);
-
+    if (!shouldValidate) {
       this.ky = ky.create({
         prefixUrl: baseUrl,
-        ...(options?.headers && { headers: options.headers }),
-        hooks: {
-          beforeRequest: [
-            (request, options) => {
-              const operation = (options as any).operation as Operation;
-              return hooks.beforeRequest?.(request, options, operation) ?? request;
-            },
-          ],
-          afterResponse: [
-            (request, options, response) => {
-              const operation = (options as any).operation as Operation;
-              return hooks.afterResponse?.(request, options, response, operation) ?? response;
-            },
-          ],
-        },
+        ...options,
       });
-    } else {
-      this.ky = ky.create({
-        prefixUrl: baseUrl,
-        ...(options?.headers && { headers: options.headers }),
-      });
+      return;
     }
+
+    this.validationHelpers = options?.validationHelpers ?? createValidationHelpers();
+    const hooks = createKyValidationHooks(this.validationHelpers);
+
+    this.ky = ky.create({
+      prefixUrl: baseUrl,
+      ...(options?.headers && { headers: options.headers }),
+      hooks: {
+        beforeRequest: [
+          (request, options) => {
+            const operation = (options as any).operation as Operation;
+            return hooks.beforeRequest?.(request, options, operation) ?? request;
+          },
+          ...(options?.hooks?.beforeRequest ?? []),
+        ],
+        afterResponse: [
+          (request, options, response) => {
+            const operation = (options as any).operation as Operation;
+            return hooks.afterResponse?.(request, options, response, operation) ?? response;
+          },
+          ...(options?.hooks?.afterResponse ?? []),
+        ],
+      },
+    });
   }
 
   async request(operationId: string, params?: any, body?: any): Promise<any> {
@@ -472,6 +481,10 @@ export function createClient<T extends Operations>(
   operations: T,
   options?: Omit<ClientOptions, "baseUrl">
 ): TypedClient<T> {
+  if (operations.ky || operations.request) {
+    throw new Error("`ky` and `request` are reserved properties and cannot be used as operation IDs");
+  }
+
   const client = new ApiClient(baseUrl, operations, options);
 
   // Add typed methods for each operation
