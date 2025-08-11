@@ -42,7 +42,7 @@ const testOperations = {
         schema: z.object({
           id: z.string(),
           name: z.string(),
-          email: z.string().email(),
+          email: z.email(),
         }),
       },
       "404": {
@@ -69,12 +69,14 @@ const testOperations = {
     requestBody: {
       schema: z.object({
         name: z.string().min(1),
-        email: z.string().email(),
+        email: z.email(),
         age: z.number().int().min(0),
-        profile: z.object({
-          bio: z.string().optional(),
-          avatar: z.string().url().optional(),
-        }).optional(),
+        profile: z
+          .object({
+            bio: z.string().optional(),
+            avatar: z.url().optional(),
+          })
+          .optional(),
       }),
       required: true,
     },
@@ -92,10 +94,12 @@ const testOperations = {
         description: "Bad request",
         schema: z.object({
           error: z.string(),
-          validation: z.array(z.object({
-            field: z.string(),
-            message: z.string(),
-          })),
+          validation: z.array(
+            z.object({
+              field: z.string(),
+              message: z.string(),
+            })
+          ),
         }),
       },
       "409": {
@@ -128,7 +132,7 @@ const testOperations = {
     requestBody: {
       schema: z.object({
         name: z.string().min(1).optional(),
-        email: z.string().email().optional(),
+        email: z.email().optional(),
         age: z.number().int().min(0).optional(),
       }),
       required: false,
@@ -199,7 +203,7 @@ describe("Type Utilities", () => {
   describe("BodyById", () => {
     it("should infer request body type for required body", () => {
       type CreateUserBody = BodyById<typeof testOperations, "createUser">;
-      
+
       expectTypeOf<CreateUserBody>().toEqualTypeOf<{
         name: string;
         email: string;
@@ -213,23 +217,26 @@ describe("Type Utilities", () => {
 
     it("should infer request body type for optional body", () => {
       type UpdateUserBody = BodyById<typeof testOperations, "updateUser">;
-      
-      expectTypeOf<UpdateUserBody>().toEqualTypeOf<{
-        name?: string;
-        email?: string;
-        age?: number;
-      } | undefined>();
+
+      expectTypeOf<UpdateUserBody>().toEqualTypeOf<
+        | {
+            name?: string;
+            email?: string;
+            age?: number;
+          }
+        | undefined
+      >();
     });
 
     it("should return never for operations without request body", () => {
       type GetUserBody = BodyById<typeof testOperations, "getUserById">;
-      
+
       expectTypeOf<GetUserBody>().toEqualTypeOf<never>();
     });
 
     it("should return never for operations with undefined request body", () => {
       type DeleteUserBody = BodyById<typeof testOperations, "deleteUser">;
-      
+
       expectTypeOf<DeleteUserBody>().toEqualTypeOf<never>();
     });
   });
@@ -237,7 +244,7 @@ describe("Type Utilities", () => {
   describe("ParamsById", () => {
     it("should infer all parameter types including path, query, and header", () => {
       type GetUserParams = ParamsById<typeof testOperations, "getUserById">;
-      
+
       expectTypeOf<GetUserParams>().toEqualTypeOf<{
         id: string;
         include: string[] | undefined;
@@ -247,7 +254,7 @@ describe("Type Utilities", () => {
 
     it("should handle operations with optional query parameters", () => {
       type CreateUserParams = ParamsById<typeof testOperations, "createUser">;
-      
+
       expectTypeOf<CreateUserParams>().toEqualTypeOf<{
         source: string | undefined;
       }>();
@@ -255,7 +262,7 @@ describe("Type Utilities", () => {
 
     it("should handle operations with mixed required and optional parameters", () => {
       type UpdateUserParams = ParamsById<typeof testOperations, "updateUser">;
-      
+
       expectTypeOf<UpdateUserParams>().toEqualTypeOf<{
         userId: string;
         validate: boolean | undefined;
@@ -264,7 +271,7 @@ describe("Type Utilities", () => {
 
     it("should return never for operations with no parameters", () => {
       type NoParamsParams = ParamsById<typeof testOperations, "noParams">;
-      
+
       expectTypeOf<NoParamsParams>().toEqualTypeOf<never>();
     });
   });
@@ -272,7 +279,7 @@ describe("Type Utilities", () => {
   describe("QueriesById", () => {
     it("should extract only query parameters", () => {
       type GetUserQueries = QueriesById<typeof testOperations, "getUserById">;
-      
+
       expectTypeOf<GetUserQueries>().toEqualTypeOf<{
         include: string[] | undefined;
       }>();
@@ -280,7 +287,7 @@ describe("Type Utilities", () => {
 
     it("should handle operations with only query parameters", () => {
       type CreateUserQueries = QueriesById<typeof testOperations, "createUser">;
-      
+
       expectTypeOf<CreateUserQueries>().toEqualTypeOf<{
         source: string | undefined;
       }>();
@@ -288,13 +295,13 @@ describe("Type Utilities", () => {
 
     it("should return never for operations without query parameters", () => {
       type DeleteUserQueries = QueriesById<typeof testOperations, "deleteUser">;
-      
+
       expectTypeOf<DeleteUserQueries>().toEqualTypeOf<never>();
     });
 
     it("should handle mixed parameter types and extract only queries", () => {
       type UpdateUserQueries = QueriesById<typeof testOperations, "updateUser">;
-      
+
       expectTypeOf<UpdateUserQueries>().toEqualTypeOf<{
         validate: boolean | undefined;
       }>();
@@ -304,7 +311,7 @@ describe("Type Utilities", () => {
   describe("ResponseById", () => {
     it("should infer 200 response type", () => {
       type GetUserResponse = ResponseById<typeof testOperations, "getUserById">;
-      
+
       expectTypeOf<GetUserResponse>().toEqualTypeOf<{
         id: string;
         name: string;
@@ -314,7 +321,7 @@ describe("Type Utilities", () => {
 
     it("should infer 201 response type for create operations", () => {
       type CreateUserResponse = ResponseById<typeof testOperations, "createUser">;
-      
+
       expectTypeOf<CreateUserResponse>().toEqualTypeOf<{
         id: string;
         name: string;
@@ -325,14 +332,14 @@ describe("Type Utilities", () => {
 
     it("should handle operations without 200 response", () => {
       type DeleteUserResponse = ResponseById<typeof testOperations, "deleteUser">;
-      
+
       // Should return any when no 200 response exists
       expectTypeOf<DeleteUserResponse>().toEqualTypeOf<any>();
     });
 
     it("should handle responses with complex nested objects", () => {
       type StatusResponse = ResponseById<typeof testOperations, "noParams">;
-      
+
       expectTypeOf<StatusResponse>().toEqualTypeOf<{
         status: string;
         timestamp: string;
@@ -368,22 +375,25 @@ describe("Type Utilities", () => {
       } as const satisfies Operations;
 
       type CustomResponse = ResponseById<typeof customOperation, "customOp">;
-      
+
       // Should return the first 2xx response (203 in this case)
-      expectTypeOf<CustomResponse>().toEqualTypeOf<{
-        cached: boolean;
-        data: string;
-      } | {
-        partial: string;
-        total: number;
-      }>();
+      expectTypeOf<CustomResponse>().toEqualTypeOf<
+        | {
+            cached: boolean;
+            data: string;
+          }
+        | {
+            partial: string;
+            total: number;
+          }
+      >();
     });
   });
 
   describe("ErrorsById", () => {
     it("should extract all non-200 error response types", () => {
       type GetUserErrors = ErrorsById<typeof testOperations, "getUserById">;
-      
+
       expectTypeOf<GetUserErrors>().toEqualTypeOf<{
         readonly "200": never;
         readonly "404": {
@@ -395,7 +405,7 @@ describe("Type Utilities", () => {
 
     it("should handle multiple error response types", () => {
       type CreateUserErrors = ErrorsById<typeof testOperations, "createUser">;
-      
+
       expectTypeOf<CreateUserErrors>().toEqualTypeOf<{
         readonly "201": never;
         readonly "400": {
@@ -414,7 +424,7 @@ describe("Type Utilities", () => {
 
     it("should handle operations with minimal error responses", () => {
       type DeleteUserErrors = ErrorsById<typeof testOperations, "deleteUser">;
-      
+
       expectTypeOf<DeleteUserErrors>().toEqualTypeOf<{
         readonly "204": never;
         readonly "404": {
@@ -425,7 +435,7 @@ describe("Type Utilities", () => {
 
     it("should return never for operations with only success responses", () => {
       type NoParamsErrors = ErrorsById<typeof testOperations, "noParams">;
-      
+
       expectTypeOf<NoParamsErrors>().toEqualTypeOf<never>();
     });
   });
@@ -434,11 +444,11 @@ describe("Type Utilities", () => {
     it("should handle union operation IDs", () => {
       // Note: Union operation IDs with the current type utility implementation
       // may not work as expected due to distributive conditional types
-      
+
       // Test a single operation to verify the utilities work correctly
       type CreateUserBody = BodyById<typeof testOperations, "createUser">;
       type GetUserParams = ParamsById<typeof testOperations, "getUserById">;
-      
+
       expectTypeOf<CreateUserBody>().toEqualTypeOf<{
         name: string;
         email: string;
@@ -448,13 +458,13 @@ describe("Type Utilities", () => {
           avatar?: string;
         };
       }>();
-      
+
       expectTypeOf<GetUserParams>().toEqualTypeOf<{
         id: string;
         include: string[] | undefined;
         "x-api-key": string;
       }>();
-      
+
       // Union types with these utilities are not currently supported
       // and may result in unexpected behavior - this is a known limitation
     });
@@ -476,7 +486,7 @@ describe("Type Utilities", () => {
       } as const satisfies Operations;
 
       type NoSchemaResponse = ResponseById<typeof noSchemaOp, "noSchemaResponse">;
-      
+
       // Should return any when no schema is defined
       expectTypeOf<NoSchemaResponse>().toEqualTypeOf<any>();
     });
@@ -485,7 +495,7 @@ describe("Type Utilities", () => {
       const errorOnlyOp = {
         errorOnly: {
           operationId: "errorOnly",
-          method: "get", 
+          method: "get",
           path: "/error",
           parameters: [],
           requestBody: undefined,
@@ -495,7 +505,7 @@ describe("Type Utilities", () => {
               schema: z.object({ error: z.string() }),
             },
             "500": {
-              description: "Internal error", 
+              description: "Internal error",
               schema: z.object({ message: z.string() }),
             },
           },
@@ -504,12 +514,12 @@ describe("Type Utilities", () => {
 
       type ErrorOnlyResponse = ResponseById<typeof errorOnlyOp, "errorOnly">;
       type ErrorOnlyErrors = ErrorsById<typeof errorOnlyOp, "errorOnly">;
-      
+
       // Should return any when no 2xx responses exist
       // Note: The actual type behavior may differ from expected 'any'
       const errorResponse: ErrorOnlyResponse = null as any;
       expect(errorResponse).toBeDefined; // Just to use the variable
-      
+
       // Should properly type error responses
       expectTypeOf<ErrorOnlyErrors>().toEqualTypeOf<{
         readonly "400": { error: string };
@@ -530,11 +540,13 @@ describe("Type Utilities", () => {
               name: "nested",
               in: "query" as const,
               required: false,
-              schema: z.object({
-                level1: z.object({
-                  level2: z.array(z.string()),
-                }),
-              }).optional(),
+              schema: z
+                .object({
+                  level1: z.object({
+                    level2: z.array(z.string()),
+                  }),
+                })
+                .optional(),
             },
           ],
           requestBody: {
@@ -584,8 +596,7 @@ describe("Type Utilities", () => {
       }>();
 
       expectTypeOf<ComplexResponse>().toEqualTypeOf<
-        | { success: true; data: any }
-        | { success: false; error: string }
+        { success: true; data: any } | { success: false; error: string }
       >();
     });
   });

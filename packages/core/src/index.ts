@@ -243,7 +243,7 @@ type InferOperationBody<T extends Operation> = T["requestBody"] extends Operatio
 
 // Helper to find the first 2xx success response
 type FindSuccessResponse<T extends Record<string, any>> = {
-  [K in keyof T]: K extends `2${string}` 
+  [K in keyof T]: K extends `2${string}`
     ? T[K] extends OperationResponse
       ? T[K]["schema"] extends { _output: infer O }
         ? O
@@ -261,14 +261,14 @@ type FindSuccessResponse<T extends Record<string, any>> = {
     }[keyof T] extends never
     ? any
     : {
-      [K in keyof T]: T[K] extends OperationResponse
-        ? T[K]["schema"] extends { _output: infer O }
-          ? O
-          : any
-        : any;
-    }[keyof T]
+        [K in keyof T]: T[K] extends OperationResponse
+          ? T[K]["schema"] extends { _output: infer O }
+            ? O
+            : any
+          : any;
+      }[keyof T]
   : {
-      [K in keyof T]: K extends `2${string}` 
+      [K in keyof T]: K extends `2${string}`
         ? T[K] extends OperationResponse
           ? T[K]["schema"] extends { _output: infer O }
             ? O
@@ -295,24 +295,28 @@ export type QueriesById<T extends Operations, K extends keyof T> = T[K] extends 
     ? T[K]["parameters"] extends readonly []
       ? never
       : {
-          [P in T[K]["parameters"][number] as P["in"] extends "query" ? P["name"] : never]: P["required"] extends true
-            ? P["schema"] extends { _output: infer O }
-              ? O
-              : any
-            : P["schema"] extends { _output: infer O }
-              ? O | undefined
-              : any | undefined;
-        } extends Record<string, never>
+            [P in T[K]["parameters"][number] as P["in"] extends "query"
+              ? P["name"]
+              : never]: P["required"] extends true
+              ? P["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : P["schema"] extends { _output: infer O }
+                ? O | undefined
+                : any | undefined;
+          } extends Record<string, never>
         ? never
         : {
-          [P in T[K]["parameters"][number] as P["in"] extends "query" ? P["name"] : never]: P["required"] extends true
-            ? P["schema"] extends { _output: infer O }
-              ? O
-              : any
-            : P["schema"] extends { _output: infer O }
-              ? O | undefined
-              : any | undefined;
-        }
+            [P in T[K]["parameters"][number] as P["in"] extends "query"
+              ? P["name"]
+              : never]: P["required"] extends true
+              ? P["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : P["schema"] extends { _output: infer O }
+                ? O | undefined
+                : any | undefined;
+          }
     : never
   : never;
 
@@ -333,21 +337,21 @@ export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends O
       } extends Record<string, never>
       ? never
       : {
-        [StatusCode in keyof T[K]["responses"]]: StatusCode extends `2${string}`
-          ? never
-          : T[K]["responses"][StatusCode] extends OperationResponse
-            ? T[K]["responses"][StatusCode]["schema"] extends { _output: infer O }
-              ? O
-              : any
-            : any;
-      }
+          [StatusCode in keyof T[K]["responses"]]: StatusCode extends `2${string}`
+            ? never
+            : T[K]["responses"][StatusCode] extends OperationResponse
+              ? T[K]["responses"][StatusCode]["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : any;
+        }
     : never
   : never;
 
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
-  ? T[K]["requestBody"] extends OperationRequestBody
+    ? T[K]["requestBody"] extends OperationRequestBody
       ? InferOperationParams<T[K]> extends never
         ? (body: InferOperationBody<T[K]>) => Promise<InferOperationResponse<T[K]>>
         : (

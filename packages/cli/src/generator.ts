@@ -328,12 +328,10 @@ function generateStringSchema(schema: any): string {
         zodSchema += ".time()";
         break;
       case "email":
-        zodSchema += ".email()";
-        break;
+        return "z.email()";
       case "uri":
       case "url":
-        zodSchema += ".url()";
-        break;
+        return "z.url()";
       case "uuid":
         zodSchema += ".uuid()";
         break;

@@ -15,7 +15,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
 
   describe("String format validations", () => {
     it("should generate email validation", () => {
-      expect(clientCode).toContain("z.string().email()");
+      expect(clientCode).toContain("z.email()");
     });
 
     it("should generate UUID validation", () => {
@@ -31,7 +31,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
     });
 
     it("should generate URI validation", () => {
-      expect(clientCode).toContain("z.string().url()");
+      expect(clientCode).toContain("z.url()");
     });
 
     it("should generate IPv4 validation", () => {
@@ -219,7 +219,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
     it("should preserve required field validation", () => {
       // Check that required fields don't have .optional()
       expect(clientCode).toMatch(/id:\s*z\.string\(\)\.uuid\(\)(?!.*\.optional)/);
-      expect(clientCode).toMatch(/email:\s*z\.string\(\)\.email\(\)(?!.*\.optional)/);
+      expect(clientCode).toMatch(/email:\s*z\.email\(\)(?!.*\.optional)/);
       expect(clientCode).toMatch(/createdAt:\s*z\.iso\.datetime\(\)(?!.*\.optional)/);
     });
 

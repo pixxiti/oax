@@ -48,7 +48,7 @@ const mockOperations: Operations = {
         schema: z.object({
           id: z.string(),
           name: z.string(),
-          email: z.string().email(),
+          email: z.email(),
         }),
       },
     },
@@ -61,7 +61,7 @@ const mockOperations: Operations = {
     requestBody: {
       schema: z.object({
         name: z.string().min(1),
-        email: z.string().email(),
+        email: z.email(),
         age: z.number().int().min(0),
       }),
       required: true,
