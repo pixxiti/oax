@@ -1,0 +1,41 @@
+{
+  "name": "@zoddy/hooks",
+  "version": "1.0.0",
+  "description": "React Query v5 hooks for Zoddy API clients",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write ."
+  },
+  "keywords": ["react-query", "hooks", "openapi", "zod", "typescript"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "@zoddy/core": "workspace:*",
+    "zod": "^4.0.17"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "jsdom": "^26.1.0",
+    "react": "^18.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "react": "^18.0.0"
+  }
+}
