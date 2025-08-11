@@ -1,7 +1,7 @@
 import type { Operations } from "@zoddy/core";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
-import { createHooks } from "../src/index";
+import { createHooks, generateQueryKey } from "../src/index";
 
 // Mock React Query
 vi.mock("@tanstack/react-query", () => ({
@@ -114,7 +114,7 @@ describe("createHooks", () => {
       operations: mockOperations,
     });
 
-    const result = hooks.getPetById({ petId: "1" }, { enabled: true });
+    const result = hooks.getPetById({ params: { petId: "1" } }, { enabled: true });
 
     // Verify that the hook returns the expected useQuery properties
     expect(result).toHaveProperty("data");
@@ -144,127 +144,355 @@ describe("createHooks", () => {
     expect(result).toHaveProperty("mutationFn");
   });
 
-  it("should work with flattened query parameters", () => {
+  it("should work with structured query parameters", () => {
     const hooks = createHooks({
       apiName: "petstore",
       client: mockClient,
       operations: mockOperations,
     });
 
-    // Test with query parameters - should be flattened like client interface
-    const result = hooks.getUsersByStatus({ status: "active", limit: 10 }, { enabled: true });
+    // Test with query parameters using new structured format
+    const result = hooks.getUsersByStatus(
+      {
+        queries: { status: "active", limit: 10 },
+      },
+      { enabled: true }
+    );
 
     expect(result).toHaveProperty("data");
     expect(result).toHaveProperty("isLoading");
     expect(result).toHaveProperty("error");
   });
 
-  // TODO: Fix getKey tests - commenting out until getKey is working properly
-  /*
-  it('should generate correct query keys for path parameters', () => {
+  it("should generate correct query keys for path parameters", () => {
     const hooks = createHooks({
-      apiName: 'petstore',
+      apiName: "petstore",
       client: mockClient,
       operations: mockOperations,
     });
 
-    const queryKey = hooks.getKey('getPetById', { params: { petId: '123' } });
-    expect(queryKey).toEqual([
-      { apiName: 'petstore', path: '/pets/:petId' },
-      { petId: '123' },
-    ]);
+    const queryKey = hooks.getKey("getPetById", { params: { petId: "123" } });
+    expect(queryKey).toEqual([{ apiName: "petstore", path: "/pets/:petId" }, { petId: "123" }]);
   });
 
-  it('should generate correct query keys for query parameters', () => {
+  it("should generate correct query keys for query parameters", () => {
     const hooks = createHooks({
-      apiName: 'petstore',
+      apiName: "petstore",
       client: mockClient,
       operations: mockOperations,
     });
 
-    const queryKey = hooks.getKey('getUsersByStatus', {
-      queries: { status: 'active', limit: 10 },
+    const queryKey = hooks.getKey("getUsersByStatus", {
+      queries: { status: "active", limit: 10 },
     });
     expect(queryKey).toEqual([
-      { apiName: 'petstore', path: '/users' },
-      { status: 'active', limit: 10 },
+      { apiName: "petstore", path: "/users" },
+      { status: "active", limit: 10 },
     ]);
   });
 
-  it('should generate correct query keys for both path and query parameters', () => {
+  it("should generate correct query keys for both path and query parameters", () => {
     // Add a mock operation with both path and query params
-    const operationsWithBoth: Operations = {
+    const operationsWithBoth = {
       ...mockOperations,
       getUserPets: {
-        method: 'get',
-        path: '/users/{userId}/pets',
-        operationId: 'getUserPets',
+        method: "get",
+        path: "/users/{userId}/pets",
+        operationId: "getUserPets",
         parameters: [
           {
-            name: 'userId',
-            in: 'path',
+            name: "userId",
+            in: "path",
             required: true,
-            schema: { _output: 'string' },
+            schema: z.string(),
           },
           {
-            name: 'status',
-            in: 'query',
+            name: "status",
+            in: "query",
             required: false,
-            schema: { _output: 'string' },
+            schema: z.string(),
           },
         ],
         responses: {
-          '200': {
-            description: 'User pets',
-            schema: { _output: [{ id: 'string', name: 'string' }] },
+          "200": {
+            description: "User pets",
+            schema: z.array(z.object({ id: z.string(), name: z.string() })),
           },
         },
       },
-    };
+    } as const satisfies Operations;
 
     const hooks = createHooks({
-      apiName: 'petstore',
+      apiName: "petstore",
       client: { ...mockClient, getUserPets: vi.fn() },
       operations: operationsWithBoth,
     });
 
-    const queryKey = hooks.getKey('getUserPets', {
-      params: { userId: '123' },
-      queries: { status: 'active' },
+    const queryKey = hooks.getKey("getUserPets", {
+      params: { userId: "123" },
+      queries: { status: "active" },
     });
 
     expect(queryKey).toEqual([
-      { apiName: 'petstore', path: '/users/:userId/pets' },
-      { userId: '123' },
-      { status: 'active' },
+      { apiName: "petstore", path: "/users/:userId/pets" },
+      { userId: "123" },
+      { status: "active" },
     ]);
   });
 
-  it('should generate base query key when no parameters provided', () => {
+  it("should generate base query key when no parameters provided", () => {
     const hooks = createHooks({
-      apiName: 'petstore',
+      apiName: "petstore",
       client: mockClient,
       operations: mockOperations,
     });
 
-    const queryKey = hooks.getKey('createPet');
-    expect(queryKey).toEqual([{ apiName: 'petstore', path: '/pets' }]);
+    const queryKey = hooks.getKey("createPet");
+    expect(queryKey).toEqual([{ apiName: "petstore", path: "/pets" }]);
   });
 
-  it('should handle operations without query parameters correctly', () => {
+  it("should handle operations without query parameters correctly", () => {
     const hooks = createHooks({
-      apiName: 'petstore',
+      apiName: "petstore",
       client: mockClient,
       operations: mockOperations,
     });
 
-    const queryKey = hooks.getKey('getPetById', { params: { petId: '123' } });
-    expect(queryKey).toEqual([
-      { apiName: 'petstore', path: '/pets/:petId' },
-      { petId: '123' },
-    ]);
+    const queryKey = hooks.getKey("getPetById", { params: { petId: "123" } });
+    expect(queryKey).toEqual([{ apiName: "petstore", path: "/pets/:petId" }, { petId: "123" }]);
     // Should not include the queries array since there are no query parameters
     expect(queryKey).toHaveLength(2);
   });
-  */
+
+  describe("getKey vs generateQueryKey consistency", () => {
+    const apiName = "petstore";
+
+    it("should return identical results for no parameters", () => {
+      const hooks = createHooks({
+        apiName,
+        client: mockClient,
+        operations: mockOperations,
+      });
+
+      const operationId = "createPet";
+      const operation = mockOperations[operationId];
+
+      const getKeyResult = hooks.getKey(operationId);
+      const generateQueryKeyResult = generateQueryKey(apiName, operationId, operation);
+
+      expect(getKeyResult).toEqual(generateQueryKeyResult);
+    });
+
+    it("should return identical results for path parameters", () => {
+      const hooks = createHooks({
+        apiName,
+        client: mockClient,
+        operations: mockOperations,
+      });
+
+      const operationId = "getPetById";
+      const operation = mockOperations[operationId];
+      const params = { params: { petId: "123" } };
+
+      const getKeyResult = hooks.getKey(operationId, params);
+      const generateQueryKeyResult = generateQueryKey(
+        apiName,
+        operationId,
+        operation,
+        params as any
+      );
+
+      expect(getKeyResult).toEqual(generateQueryKeyResult);
+    });
+
+    it("should return identical results for query parameters", () => {
+      const hooks = createHooks({
+        apiName,
+        client: mockClient,
+        operations: mockOperations,
+      });
+
+      const operationId = "getUsersByStatus";
+      const operation = mockOperations[operationId];
+      const params = { queries: { status: "active", limit: 10 } };
+
+      const getKeyResult = hooks.getKey(operationId, params);
+      const generateQueryKeyResult = generateQueryKey(
+        apiName,
+        operationId,
+        operation,
+        params as any
+      );
+
+      expect(getKeyResult).toEqual(generateQueryKeyResult);
+    });
+
+    it("should return identical results for both path and query parameters", () => {
+      const operationsWithBoth = {
+        ...mockOperations,
+        getUserPets: {
+          method: "get",
+          path: "/users/{userId}/pets",
+          operationId: "getUserPets",
+          parameters: [
+            {
+              name: "userId",
+              in: "path",
+              required: true,
+              schema: z.string(),
+            },
+            {
+              name: "status",
+              in: "query",
+              required: false,
+              schema: z.string(),
+            },
+          ],
+          responses: {
+            "200": {
+              description: "User pets",
+              schema: z.array(z.object({ id: z.string(), name: z.string() })),
+            },
+          },
+        },
+      } as const satisfies Operations;
+
+      const hooks = createHooks({
+        apiName,
+        client: { ...mockClient, getUserPets: vi.fn() },
+        operations: operationsWithBoth,
+      });
+
+      const operationId = "getUserPets";
+      const operation = operationsWithBoth[operationId];
+      const params = {
+        params: { userId: "123" },
+        queries: { status: "active" },
+      };
+
+      const getKeyResult = hooks.getKey(operationId, params);
+      const generateQueryKeyResult = generateQueryKey(
+        apiName,
+        operationId,
+        operation,
+        params as any
+      );
+
+      expect(getKeyResult).toEqual(generateQueryKeyResult);
+    });
+
+    it("should return identical results for headers", () => {
+      const operationsWithHeaders = {
+        ...mockOperations,
+        getProtectedData: {
+          method: "get",
+          path: "/protected",
+          operationId: "getProtectedData",
+          parameters: [
+            {
+              name: "authorization",
+              in: "header",
+              required: true,
+              schema: z.string(),
+            },
+            {
+              name: "x-api-key",
+              in: "header",
+              required: false,
+              schema: z.string(),
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Protected data",
+              schema: z.object({ data: z.string() }),
+            },
+          },
+        },
+      } as const satisfies Operations;
+
+      const hooks = createHooks({
+        apiName,
+        client: { ...mockClient, getProtectedData: vi.fn() },
+        operations: operationsWithHeaders,
+      });
+
+      const operationId = "getProtectedData";
+      const operation = operationsWithHeaders[operationId];
+      const params = {
+        headers: { authorization: "Bearer token", "x-api-key": "key123" },
+      };
+
+      const getKeyResult = hooks.getKey(operationId, params);
+      const generateQueryKeyResult = generateQueryKey(
+        apiName,
+        operationId,
+        operation,
+        params as any
+      );
+
+      expect(getKeyResult).toEqual(generateQueryKeyResult);
+    });
+
+    it("should return identical results for mixed parameter types", () => {
+      const operationsWithMixed = {
+        ...mockOperations,
+        getComplexData: {
+          method: "get",
+          path: "/data/{id}",
+          operationId: "getComplexData",
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: z.string(),
+            },
+            {
+              name: "filter",
+              in: "query",
+              required: false,
+              schema: z.string(),
+            },
+            {
+              name: "authorization",
+              in: "header",
+              required: true,
+              schema: z.string(),
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Complex data",
+              schema: z.object({ result: z.any() }),
+            },
+          },
+        },
+      } as const satisfies Operations;
+
+      const hooks = createHooks({
+        apiName,
+        client: { ...mockClient, getComplexData: vi.fn() },
+        operations: operationsWithMixed,
+      });
+
+      const operationId = "getComplexData";
+      const operation = operationsWithMixed[operationId];
+      const params = {
+        params: { id: "123" },
+        queries: { filter: "active" },
+        headers: { authorization: "Bearer token" },
+      };
+
+      const getKeyResult = hooks.getKey(operationId, params);
+      const generateQueryKeyResult = generateQueryKey(
+        apiName,
+        operationId,
+        operation,
+        params as any
+      );
+
+      expect(getKeyResult).toEqual(generateQueryKeyResult);
+    });
+  });
 });

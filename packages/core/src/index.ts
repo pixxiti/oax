@@ -350,6 +350,66 @@ export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends O
     : never
   : never;
 
+export type PathParamsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? T[K]["parameters"] extends readonly OperationParameter[]
+    ? T[K]["parameters"] extends readonly []
+      ? never
+      : {
+            [P in T[K]["parameters"][number] as P["in"] extends "path"
+              ? P["name"]
+              : never]: P["required"] extends true
+              ? P["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : P["schema"] extends { _output: infer O }
+                ? O | undefined
+                : any | undefined;
+          } extends Record<string, never>
+        ? never
+        : {
+            [P in T[K]["parameters"][number] as P["in"] extends "path"
+              ? P["name"]
+              : never]: P["required"] extends true
+              ? P["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : P["schema"] extends { _output: infer O }
+                ? O | undefined
+                : any | undefined;
+          }
+    : never
+  : never;
+
+export type HeadersById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? T[K]["parameters"] extends readonly OperationParameter[]
+    ? T[K]["parameters"] extends readonly []
+      ? never
+      : {
+            [P in T[K]["parameters"][number] as P["in"] extends "header"
+              ? P["name"]
+              : never]: P["required"] extends true
+              ? P["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : P["schema"] extends { _output: infer O }
+                ? O | undefined
+                : any | undefined;
+          } extends Record<string, never>
+        ? never
+        : {
+            [P in T[K]["parameters"][number] as P["in"] extends "header"
+              ? P["name"]
+              : never]: P["required"] extends true
+              ? P["schema"] extends { _output: infer O }
+                ? O
+                : any
+              : P["schema"] extends { _output: infer O }
+                ? O | undefined
+                : any | undefined;
+          }
+    : never
+  : never;
+
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
@@ -482,7 +542,9 @@ export function createClient<T extends Operations>(
   options?: Omit<ClientOptions, "baseUrl">
 ): TypedClient<T> {
   if (operations.ky || operations.request) {
-    throw new Error("`ky` and `request` are reserved properties and cannot be used as operation IDs");
+    throw new Error(
+      "`ky` and `request` are reserved properties and cannot be used as operation IDs"
+    );
   }
 
   const client = new ApiClient(baseUrl, operations, options);

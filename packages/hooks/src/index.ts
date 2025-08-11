@@ -5,25 +5,39 @@ import {
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
-import type { BodyById, Operation, Operations, ParamsById, ResponseById } from "@zoddy/core";
+import type {
+  BodyById,
+  HeadersById,
+  Operation,
+  Operations,
+  PathParamsById,
+  QueriesById,
+  ResponseById,
+} from "@zoddy/core";
 
 export interface HooksOptions {
   apiName: string;
   client: any;
 }
 
-// Use ParamsById directly - it already includes all parameters flattened
-type QueryParams<T extends Operations, K extends keyof T> = ParamsById<T, K> extends never
+// New structured parameter format: { params, queries, headers }
+type QueryParams<T extends Operations, K extends keyof T> = {
+  params?: PathParamsById<T, K> extends never ? undefined : PathParamsById<T, K>;
+  queries?: QueriesById<T, K> extends never ? undefined : QueriesById<T, K>;
+  headers?: HeadersById<T, K> extends never ? undefined : HeadersById<T, K>;
+} extends { params?: undefined; queries?: undefined; headers?: undefined }
   ? undefined
-  : ParamsById<T, K>;
+  : {
+      params?: PathParamsById<T, K> extends never ? undefined : PathParamsById<T, K>;
+      queries?: QueriesById<T, K> extends never ? undefined : QueriesById<T, K>;
+      headers?: HeadersById<T, K> extends never ? undefined : HeadersById<T, K>;
+    };
 
-type MutationParams<T extends Operations, K extends keyof T> = ParamsById<T, K> extends never
-  ? BodyById<T, K> extends never
-    ? undefined
-    : BodyById<T, K>
-  : BodyById<T, K> extends never
-    ? ParamsById<T, K>
-    : ParamsById<T, K> & BodyById<T, K>;
+type MutationParams<T extends Operations, K extends keyof T> = BodyById<T, K> extends never
+  ? QueryParams<T, K>
+  : QueryParams<T, K> extends undefined
+    ? BodyById<T, K>
+    : QueryParams<T, K> & BodyById<T, K>;
 
 // Define separate interfaces for query and mutation hooks
 interface QueryHookInterface<TData, TParams> {
@@ -70,7 +84,7 @@ function normalizePathWithParams(path: string): string {
   return path.replace(/\{([^}]+)\}/g, ":$1");
 }
 
-function generateQueryKey<T extends Operations, K extends keyof T>(
+export function generateQueryKey<T extends Operations, K extends keyof T>(
   apiName: string,
   operationId: K,
   operation: T[K],
@@ -87,8 +101,20 @@ function generateQueryKey<T extends Operations, K extends keyof T>(
     return baseKey;
   }
 
-  // params is now a flattened object with all parameters
-  return [...baseKey, params];
+  // Build query key based on new structured format
+  const keyParts: any[] = [...baseKey];
+
+  // Add path parameters if present
+  if (params && typeof params === "object" && "params" in params && params.params) {
+    keyParts.push(params.params);
+  }
+
+  // Add query parameters if present
+  if (params && typeof params === "object" && "queries" in params && params.queries) {
+    keyParts.push(params.queries);
+  }
+
+  return keyParts;
 }
 
 export function createHooks<const T extends Operations>(
@@ -108,8 +134,27 @@ export function createHooks<const T extends Operations>(
         return useQuery({
           queryKey,
           queryFn: async () => {
-            // params is already flattened, pass directly to client
-            return client[operationId](params);
+            // Convert structured params to flattened format for client
+            if (!params) {
+              return client[operationId]();
+            }
+
+            const flattenedParams: any = {};
+
+            // Merge all parameter types into a single object
+            if (params.params) {
+              Object.assign(flattenedParams, params.params);
+            }
+            if (params.queries) {
+              Object.assign(flattenedParams, params.queries);
+            }
+            if (params.headers) {
+              Object.assign(flattenedParams, params.headers);
+            }
+
+            return Object.keys(flattenedParams).length > 0
+              ? client[operationId](flattenedParams)
+              : client[operationId]();
           },
           ...queryOptions,
         });
@@ -118,41 +163,60 @@ export function createHooks<const T extends Operations>(
       hooks[operationId] = (mutationOptions?: any) => {
         return useMutation({
           mutationFn: async (variables: MutationParams<T, any>) => {
-            // For mutations, we need to separate params from body
-            // The client expects (params, body) but our MutationParams now flattens them
+            if (!variables) {
+              return client[operationId]();
+            }
+
             const hasParams = typedOperation.parameters && typedOperation.parameters.length > 0;
             const hasBody = typedOperation.requestBody;
 
+            // Extract flattened parameters from structured format
+            const flattenedParams: any = {};
+            let body: any = undefined;
+
+            // Check if variables has the new structured format
+            if (variables && typeof variables === "object") {
+              // Extract parameters from structured format
+              if ("params" in variables && variables.params) {
+                Object.assign(flattenedParams, variables.params);
+              }
+              if ("queries" in variables && variables.queries) {
+                Object.assign(flattenedParams, variables.queries);
+              }
+              if ("headers" in variables && variables.headers) {
+                Object.assign(flattenedParams, variables.headers);
+              }
+
+              // Extract body data (everything that's not params/queries/headers)
+              const bodyData: any = {};
+              for (const [key, value] of Object.entries(variables)) {
+                if (key !== "params" && key !== "queries" && key !== "headers") {
+                  bodyData[key] = value;
+                }
+              }
+              if (Object.keys(bodyData).length > 0) {
+                body = bodyData;
+              }
+            }
+
             if (hasParams && hasBody) {
-              // Both params and body - need to separate them
-              const params: any = {};
-              const body: any = {};
-
-              for (const param of typedOperation.parameters) {
-                if (variables && typeof variables === "object" && param.name in variables) {
-                  params[param.name] = (variables as any)[param.name];
-                }
-              }
-
-              // Everything else goes to body
-              if (variables && typeof variables === "object") {
-                for (const [key, value] of Object.entries(variables)) {
-                  if (!typedOperation.parameters.some((p) => p.name === key)) {
-                    body[key] = value;
-                  }
-                }
-              }
-
-              return client[operationId](params, body);
+              return client[operationId](
+                Object.keys(flattenedParams).length > 0 ? flattenedParams : undefined,
+                body
+              );
             }
 
             if (hasParams) {
-              // Only params
-              return client[operationId](variables);
+              return client[operationId](
+                Object.keys(flattenedParams).length > 0 ? flattenedParams : undefined
+              );
             }
 
-            // Only body
-            return client[operationId](undefined, variables);
+            if (hasBody) {
+              return client[operationId](undefined, body || variables);
+            }
+
+            return client[operationId]();
           },
           ...mutationOptions,
         });
@@ -176,19 +240,7 @@ function createGetKeyFunction<T extends Operations>(
 ): GetKeyFunction<T> {
   return <K extends keyof T>(operationId: K, params?: any): QueryKey => {
     const operation = operations[operationId];
-    if (!operation) {
-      return [{ apiName, operationId }];
-    }
-
-    const normalizedPath = normalizePathWithParams(operation.path);
-    const baseKey = [{ apiName, path: normalizedPath }];
-
-    if (!params) {
-      return baseKey;
-    }
-
-    // params is now a flattened object with all parameters
-    return [...baseKey, params];
+    return generateQueryKey(apiName, operationId, operation, params);
   };
 }
 
