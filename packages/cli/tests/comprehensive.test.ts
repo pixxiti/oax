@@ -163,7 +163,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
   describe("Operations generation", () => {
     it("should generate operations with path parameters", () => {
       expect(clientCode).toContain("userId");
-      expect(clientCode).toContain('in: "path"');
+      expect(clientCode).toContain('params: z.object({ userId');
       expect(clientCode).toContain("required: true");
     });
 

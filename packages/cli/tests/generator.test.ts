@@ -70,12 +70,12 @@ describe("zoddy generator", () => {
 
     it("should generate path parameters correctly", () => {
       expect(clientCode).toContain("petId");
-      expect(clientCode).toContain('in: "path"');
+      expect(clientCode).toContain('params: z.object({ petId');
     });
 
     it("should generate query parameters correctly", () => {
       expect(clientCode).toContain("limit");
-      expect(clientCode).toContain('in: "query"');
+      expect(clientCode).toContain('queries: z.object({ limit');
     });
 
     it("should generate request body schemas", () => {
@@ -95,7 +95,9 @@ describe("zoddy generator", () => {
       expect(clientCode).toContain("method:");
       expect(clientCode).toContain("path:");
       expect(clientCode).toContain("operationId:");
-      expect(clientCode).toContain("parameters:");
+      expect(clientCode).toContain("params:");
+      expect(clientCode).toContain("queries:");
+      expect(clientCode).toContain("headers:");
       expect(clientCode).toContain("responses:");
     });
 
