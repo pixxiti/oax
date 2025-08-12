@@ -16,14 +16,39 @@ Zoddy is a TypeScript-first API client generator that creates fully type-safe HT
 
 ## Quick Start
 
-### Installation
+### Packages
+
+Zoddy consists of three main packages:
+
+- **[@zoddy/core](./packages/core/)** - Core runtime library for API clients with validation
+- **[@zoddy/cli](./packages/cli/)** - Command-line tool for generating typed API clients from OpenAPI specs
+- **[@zoddy/hooks](./packages/hooks/)** - React Query v5 hooks for seamless React integration
+
+## Installation
 
 ```bash
+# Core runtime library
 npm install @zoddy/core
-# or
+
+# CLI for code generation
+npm install -g @zoddy/cli
+
+# React hooks (requires React 18+ and TanStack Query v5)
+npm install @zoddy/hooks @tanstack/react-query
+```
+
+### Package Manager Alternatives
+
+```bash
+# Using pnpm
 pnpm add @zoddy/core
-# or
+pnpm add -g @zoddy/cli
+pnpm add @zoddy/hooks @tanstack/react-query
+
+# Using yarn
 yarn add @zoddy/core
+yarn global add @zoddy/cli
+yarn add @zoddy/hooks @tanstack/react-query
 ```
 
 ### Basic Usage
@@ -80,14 +105,14 @@ import {
 import { createClient } from './generated-client';
 
 const helpers = createValidationHelpers();
-const hooks = createKyValidationHooks(helpers);
+const kyHooks = createKyValidationHooks(helpers);
 
 // Extend existing client with custom hooks
 const client = createClient('https://api.example.com', {
   validate: false // Turns off all validation
   hooks: {
-    beforeRequest: [hooks.beforeRequest],
-    afterResponse: [hooks.afterResponse]
+    beforeRequest: [kyHooks.beforeRequest],
+    afterResponse: [kyHooks.afterResponse]
   }
 });
 ```
@@ -150,7 +175,16 @@ Data received: {
 
 ## Examples
 
-Check out the [basic example](./examples/basic/) for a complete working implementation using the Petstore API.
+Zoddy includes comprehensive examples to help you get started:
+
+- **[Basic Example](./examples/basic/)** - Complete implementation using the Petstore API with TypeScript
+- **[Hooks Example](./examples/hooks/)** - React integration with TanStack Query v5 hooks
+
+Each example includes:
+- Full working code with TypeScript
+- Generated API clients
+- Development server setup
+- Comprehensive documentation
 
 ## Development
 
@@ -177,8 +211,16 @@ pnpm dev
 
 ### Project Structure
 
-- `packages/core/` - Core Zoddy runtime library
-- `examples/basic/` - Basic usage example with Petstore API
+```
+zoddy/
+├── packages/
+│   ├── core/           # Core runtime library (@zoddy/core)
+│   ├── cli/            # Code generation CLI (@zoddy/cli)
+│   └── hooks/          # React Query hooks (@zoddy/hooks)
+└── examples/
+    ├── basic/          # Basic TypeScript example
+    └── hooks/          # React hooks example
+```
 
 ## Backwards Compatibility
 

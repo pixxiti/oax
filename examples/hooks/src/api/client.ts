@@ -34,14 +34,16 @@ export const Tag = z.object({
 export const Pet = z.object({
   id: z.number().int().optional(),
   name: z.string(),
-  category: z.object({ id: z.number().int().optional(), name: z.string().optional() }).optional(),
+  category: z
+    .object({ id: z.number().int().optional(), name: z.string().optional() })
+    .optional(),
   photoUrls: z.array(z.string()),
   tags: z
     .array(
       z.object({
         id: z.number().int().optional(),
         name: z.string().optional(),
-      })
+      }),
     )
     .optional(),
   status: z.enum(["available", "pending", "sold"]).optional(),
@@ -88,7 +90,7 @@ export const operations = {
             z.object({
               id: z.number().int().optional(),
               name: z.string().optional(),
-            })
+            }),
           )
           .optional(),
         status: z.enum(["available", "pending", "sold"]).optional(),
@@ -113,7 +115,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              })
+              }),
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -158,7 +160,7 @@ export const operations = {
             z.object({
               id: z.number().int().optional(),
               name: z.string().optional(),
-            })
+            }),
           )
           .optional(),
         status: z.enum(["available", "pending", "sold"]).optional(),
@@ -183,7 +185,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              })
+              }),
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -212,7 +214,8 @@ export const operations = {
     path: "/pet/findByStatus",
     operationId: "findPetsByStatus",
     summary: "Finds Pets by status.",
-    description: "Multiple status values can be provided with comma separated strings.",
+    description:
+      "Multiple status values can be provided with comma separated strings.",
     params: z.object({}),
     queries: z.object({ status: z.enum(["available", "pending", "sold"]) }),
     headers: z.object({}),
@@ -236,11 +239,11 @@ export const operations = {
                 z.object({
                   id: z.number().int().optional(),
                   name: z.string().optional(),
-                })
+                }),
               )
               .optional(),
             status: z.enum(["available", "pending", "sold"]).optional(),
-          })
+          }),
         ),
       },
       "400": {
@@ -283,11 +286,11 @@ export const operations = {
                 z.object({
                   id: z.number().int().optional(),
                   name: z.string().optional(),
-                })
+                }),
               )
               .optional(),
             status: z.enum(["available", "pending", "sold"]).optional(),
-          })
+          }),
         ),
       },
       "400": {
@@ -328,7 +331,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              })
+              }),
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -379,7 +382,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              })
+              }),
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -649,7 +652,7 @@ export const operations = {
           password: z.string().optional(),
           phone: z.string().optional(),
           userStatus: z.number().int().optional(),
-        })
+        }),
       ),
       required: false,
     },
@@ -834,6 +837,9 @@ export const operations = {
 
 export type Operations = typeof operations;
 
-export function createClient(baseUrl: string, options?: { headers?: Record<string, string> }) {
+export function createClient(
+  baseUrl: string,
+  options?: { headers?: Record<string, string> },
+) {
   return createRuntimeClient(baseUrl, operations, options);
 }
