@@ -70,12 +70,12 @@ describe("zoddy generator", () => {
 
     it("should generate path parameters correctly", () => {
       expect(clientCode).toContain("petId");
-      expect(clientCode).toContain('params: z.object({ petId');
+      expect(clientCode).toContain("params: z.object({ petId");
     });
 
     it("should generate query parameters correctly", () => {
       expect(clientCode).toContain("limit");
-      expect(clientCode).toContain('queries: z.object({ limit');
+      expect(clientCode).toContain("queries: z.object({ limit");
     });
 
     it("should generate request body schemas", () => {
