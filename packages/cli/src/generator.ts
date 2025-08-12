@@ -180,17 +180,25 @@ function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
 function generateOperationsCode(operations: OperationInfo[]): string {
   const operationObjects = operations
     .map((op) => {
-      const parametersCode = op.parameters
-        .map(
-          (p) => `
-    {
-      name: '${p.name}',
-      in: '${p.in}',
-      required: ${p.required},
-      schema: ${p.schema.zodCode}
-    }`
-        )
-        .join(",");
+      // Group parameters by type
+      const pathParams = op.parameters.filter((p) => p.in === "path");
+      const queryParams = op.parameters.filter((p) => p.in === "query");
+      const headerParams = op.parameters.filter((p) => p.in === "header");
+
+      // Generate parameter objects for each type
+      const generateParamObject = (params: ParameterInfo[]) => {
+        if (params.length === 0) return "z.object({})";
+
+        const properties = params
+          .map((p) => `${p.name}: ${p.schema.zodCode}${p.required ? "" : ".optional()"}`)
+          .join(", ");
+
+        return `z.object({ ${properties} })`;
+      };
+
+      const pathParamsCode = generateParamObject(pathParams);
+      const queryParamsCode = generateParamObject(queryParams);
+      const headerParamsCode = generateParamObject(headerParams);
 
       const requestBodyCode = op.requestBody
         ? `requestBody: { schema: ${op.requestBody.zodCode}, required: ${op.requestBody.required} },`
@@ -213,8 +221,9 @@ function generateOperationsCode(operations: OperationInfo[]): string {
     operationId: '${op.operationId}',
     summary: ${op.summary ? `'${op.summary}'` : "undefined"},
     description: ${op.description ? `'${op.description}'` : "undefined"},
-    parameters: [${parametersCode}
-    ],
+    params: ${pathParamsCode},
+    queries: ${queryParamsCode},
+    headers: ${headerParamsCode},
     ${requestBodyCode}
     responses: {${responsesCode}
     }

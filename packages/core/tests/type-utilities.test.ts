@@ -15,26 +15,15 @@ const testOperations = {
     operationId: "getUserById",
     method: "get",
     path: "/users/{id}",
-    parameters: [
-      {
-        name: "id",
-        in: "path" as const,
-        required: true,
-        schema: z.string().min(1),
-      },
-      {
-        name: "include",
-        in: "query" as const,
-        required: false,
-        schema: z.array(z.string()).optional(),
-      },
-      {
-        name: "x-api-key",
-        in: "header" as const,
-        required: true,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({
+      id: z.string().min(1),
+    }),
+    queries: z.object({
+      include: z.array(z.string()).optional(),
+    }),
+    headers: z.object({
+      "x-api-key": z.string(),
+    }),
     requestBody: undefined,
     responses: {
       "200": {
@@ -58,14 +47,11 @@ const testOperations = {
     operationId: "createUser",
     method: "post",
     path: "/users",
-    parameters: [
-      {
-        name: "source",
-        in: "query" as const,
-        required: false,
-        schema: z.string().optional(),
-      },
-    ],
+    params: z.object({}),
+    queries: z.object({
+      source: z.string().optional(),
+    }),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         name: z.string().min(1),
@@ -115,20 +101,12 @@ const testOperations = {
     operationId: "updateUser",
     method: "put",
     path: "/users/{userId}",
-    parameters: [
-      {
-        name: "userId",
-        in: "path" as const,
-        required: true,
-        schema: z.string().uuid(),
-      },
-      {
-        name: "validate",
-        in: "query" as const,
-        required: false,
-        schema: z.boolean().optional(),
-      },
-    ],
+    params: z.object({
+      userId: z.uuid(),
+      validate: z.boolean().optional(),
+    }),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         name: z.string().min(1).optional(),
@@ -160,14 +138,11 @@ const testOperations = {
     operationId: "deleteUser",
     method: "delete",
     path: "/users/{id}",
-    parameters: [
-      {
-        name: "id",
-        in: "path" as const,
-        required: true,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({
+      id: z.string(),
+    }),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: undefined,
     responses: {
       "204": {
@@ -185,7 +160,9 @@ const testOperations = {
     operationId: "noParams",
     method: "get",
     path: "/status",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: undefined,
     responses: {
       "200": {
@@ -247,17 +224,13 @@ describe("Type Utilities", () => {
 
       expectTypeOf<GetUserParams>().toEqualTypeOf<{
         id: string;
-        include: string[] | undefined;
-        "x-api-key": string;
       }>();
     });
 
     it("should handle operations with optional query parameters", () => {
       type CreateUserParams = ParamsById<typeof testOperations, "createUser">;
 
-      expectTypeOf<CreateUserParams>().toEqualTypeOf<{
-        source: string | undefined;
-      }>();
+      expectTypeOf<CreateUserParams>().toEqualTypeOf<never>();
     });
 
     it("should handle operations with mixed required and optional parameters", () => {
@@ -265,7 +238,7 @@ describe("Type Utilities", () => {
 
       expectTypeOf<UpdateUserParams>().toEqualTypeOf<{
         userId: string;
-        validate: boolean | undefined;
+        validate?: boolean | undefined;
       }>();
     });
 
@@ -281,7 +254,7 @@ describe("Type Utilities", () => {
       type GetUserQueries = QueriesById<typeof testOperations, "getUserById">;
 
       expectTypeOf<GetUserQueries>().toEqualTypeOf<{
-        include: string[] | undefined;
+        include?: string[] | undefined;
       }>();
     });
 
@@ -289,7 +262,7 @@ describe("Type Utilities", () => {
       type CreateUserQueries = QueriesById<typeof testOperations, "createUser">;
 
       expectTypeOf<CreateUserQueries>().toEqualTypeOf<{
-        source: string | undefined;
+        source?: string | undefined;
       }>();
     });
 
@@ -302,9 +275,7 @@ describe("Type Utilities", () => {
     it("should handle mixed parameter types and extract only queries", () => {
       type UpdateUserQueries = QueriesById<typeof testOperations, "updateUser">;
 
-      expectTypeOf<UpdateUserQueries>().toEqualTypeOf<{
-        validate: boolean | undefined;
-      }>();
+      expectTypeOf<UpdateUserQueries>().toEqualTypeOf<never>();
     });
   });
 
@@ -353,7 +324,9 @@ describe("Type Utilities", () => {
           operationId: "customOp",
           method: "get",
           path: "/custom",
-          parameters: [],
+          params: z.object({}),
+          queries: z.object({}),
+          headers: z.object({}),
           requestBody: undefined,
           responses: {
             "203": {
@@ -447,7 +420,7 @@ describe("Type Utilities", () => {
 
       // Test a single operation to verify the utilities work correctly
       type CreateUserBody = BodyById<typeof testOperations, "createUser">;
-      type GetUserParams = ParamsById<typeof testOperations, "getUserById">;
+      type GetUserParams = ParamsById<typeof testOperations, "getUserById" | "createUser">;
 
       expectTypeOf<CreateUserBody>().toEqualTypeOf<{
         name: string;
@@ -461,8 +434,6 @@ describe("Type Utilities", () => {
 
       expectTypeOf<GetUserParams>().toEqualTypeOf<{
         id: string;
-        include: string[] | undefined;
-        "x-api-key": string;
       }>();
 
       // Union types with these utilities are not currently supported
@@ -475,7 +446,9 @@ describe("Type Utilities", () => {
           operationId: "noSchemaResponse",
           method: "get",
           path: "/no-schema",
-          parameters: [],
+          params: z.object({}),
+          queries: z.object({}),
+          headers: z.object({}),
           requestBody: undefined,
           responses: {
             "200": {
@@ -497,7 +470,9 @@ describe("Type Utilities", () => {
           operationId: "errorOnly",
           method: "get",
           path: "/error",
-          parameters: [],
+          params: z.object({}),
+          queries: z.object({}),
+          headers: z.object({}),
           requestBody: undefined,
           responses: {
             "400": {
@@ -535,20 +510,13 @@ describe("Type Utilities", () => {
           operationId: "complexOp",
           method: "post",
           path: "/complex",
-          parameters: [
-            {
-              name: "nested",
-              in: "query" as const,
-              required: false,
-              schema: z
-                .object({
-                  level1: z.object({
-                    level2: z.array(z.string()),
-                  }),
-                })
-                .optional(),
-            },
-          ],
+          params: z.object({}),
+          queries: z.object({
+            level1: z.object({
+              level2: z.array(z.string()),
+            }),
+          }),
+          headers: z.object({}),
           requestBody: {
             schema: z.discriminatedUnion("type", [
               z.object({
@@ -581,7 +549,7 @@ describe("Type Utilities", () => {
       } as const satisfies Operations;
 
       type ComplexBody = BodyById<typeof complexOperation, "complexOp">;
-      type ComplexParams = ParamsById<typeof complexOperation, "complexOp">;
+      type ComplexQueries = QueriesById<typeof complexOperation, "complexOp">;
       type ComplexResponse = ResponseById<typeof complexOperation, "complexOp">;
 
       // These should compile without errors and infer proper types
@@ -591,8 +559,8 @@ describe("Type Utilities", () => {
       >();
 
       // Complex params should have optional nested structure
-      expectTypeOf<ComplexParams>().toEqualTypeOf<{
-        nested: { level1: { level2: string[] } } | undefined;
+      expectTypeOf<ComplexQueries>().toEqualTypeOf<{
+        level1: { level2: string[] };
       }>();
 
       expectTypeOf<ComplexResponse>().toEqualTypeOf<

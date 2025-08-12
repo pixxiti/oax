@@ -10,7 +10,7 @@ import type {
   HeadersById,
   Operation,
   Operations,
-  PathParamsById,
+  ParamsById,
   QueriesById,
   ResponseById,
 } from "@zoddy/core";
@@ -22,13 +22,13 @@ export interface HooksOptions {
 
 // New structured parameter format: { params, queries, headers }
 type QueryParams<T extends Operations, K extends keyof T> = {
-  params?: PathParamsById<T, K> extends never ? undefined : PathParamsById<T, K>;
+  params?: ParamsById<T, K> extends never ? undefined : ParamsById<T, K>;
   queries?: QueriesById<T, K> extends never ? undefined : QueriesById<T, K>;
   headers?: HeadersById<T, K> extends never ? undefined : HeadersById<T, K>;
 } extends { params?: undefined; queries?: undefined; headers?: undefined }
   ? undefined
   : {
-      params?: PathParamsById<T, K> extends never ? undefined : PathParamsById<T, K>;
+      params?: ParamsById<T, K> extends never ? undefined : ParamsById<T, K>;
       queries?: QueriesById<T, K> extends never ? undefined : QueriesById<T, K>;
       headers?: HeadersById<T, K> extends never ? undefined : HeadersById<T, K>;
     };
@@ -134,27 +134,8 @@ export function createHooks<const T extends Operations>(
         return useQuery({
           queryKey,
           queryFn: async () => {
-            // Convert structured params to flattened format for client
-            if (!params) {
-              return client[operationId]();
-            }
-
-            const flattenedParams: any = {};
-
-            // Merge all parameter types into a single object
-            if (params.params) {
-              Object.assign(flattenedParams, params.params);
-            }
-            if (params.queries) {
-              Object.assign(flattenedParams, params.queries);
-            }
-            if (params.headers) {
-              Object.assign(flattenedParams, params.headers);
-            }
-
-            return Object.keys(flattenedParams).length > 0
-              ? client[operationId](flattenedParams)
-              : client[operationId]();
+            // Use the new structured parameter format directly
+            return client[operationId](params);
           },
           ...queryOptions,
         });
@@ -167,25 +148,22 @@ export function createHooks<const T extends Operations>(
               return client[operationId]();
             }
 
-            const hasParams = typedOperation.parameters && typedOperation.parameters.length > 0;
+            const hasParams =
+              typedOperation.params || typedOperation.queries || typedOperation.headers;
             const hasBody = typedOperation.requestBody;
 
-            // Extract flattened parameters from structured format
-            const flattenedParams: any = {};
-            let body: any = undefined;
-
-            // Check if variables has the new structured format
-            if (variables && typeof variables === "object") {
-              // Extract parameters from structured format
-              if ("params" in variables && variables.params) {
-                Object.assign(flattenedParams, variables.params);
-              }
-              if ("queries" in variables && variables.queries) {
-                Object.assign(flattenedParams, variables.queries);
-              }
-              if ("headers" in variables && variables.headers) {
-                Object.assign(flattenedParams, variables.headers);
-              }
+            // Check if variables has the new structured format (params, queries, headers)
+            if (
+              variables &&
+              typeof variables === "object" &&
+              ("params" in variables || "queries" in variables || "headers" in variables)
+            ) {
+              // Extract structured parameters
+              const inputs = {
+                params: "params" in variables ? variables.params : undefined,
+                queries: "queries" in variables ? variables.queries : undefined,
+                headers: "headers" in variables ? variables.headers : undefined,
+              };
 
               // Extract body data (everything that's not params/queries/headers)
               const bodyData: any = {};
@@ -194,26 +172,24 @@ export function createHooks<const T extends Operations>(
                   bodyData[key] = value;
                 }
               }
-              if (Object.keys(bodyData).length > 0) {
-                body = bodyData;
+              const body = Object.keys(bodyData).length > 0 ? bodyData : undefined;
+
+              // Call with structured format
+              if (hasParams && hasBody) {
+                return client[operationId](inputs, body);
               }
+              if (hasParams) {
+                return client[operationId](inputs);
+              }
+              if (hasBody) {
+                return client[operationId](undefined, body);
+              }
+              return client[operationId]();
             }
 
-            if (hasParams && hasBody) {
-              return client[operationId](
-                Object.keys(flattenedParams).length > 0 ? flattenedParams : undefined,
-                body
-              );
-            }
-
-            if (hasParams) {
-              return client[operationId](
-                Object.keys(flattenedParams).length > 0 ? flattenedParams : undefined
-              );
-            }
-
+            // Fallback for non-structured variables (treat as body)
             if (hasBody) {
-              return client[operationId](undefined, body || variables);
+              return client[operationId](undefined, variables);
             }
 
             return client[operationId]();

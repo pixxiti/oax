@@ -27,20 +27,13 @@ const mockOperations: Operations = {
     operationId: "getUser",
     method: "get",
     path: "/users/{id}",
-    parameters: [
-      {
-        name: "id",
-        in: "path",
-        required: true,
-        schema: z.string().min(1),
-      },
-      {
-        name: "include",
-        in: "query",
-        required: false,
-        schema: z.array(z.string()).optional(),
-      },
-    ],
+    params: z.object({
+      id: z.string(),
+    }),
+    queries: z.object({
+      include: z.array(z.string()).optional(),
+    }),
+    headers: z.object({}),
     requestBody: undefined,
     responses: {
       "200": {
@@ -57,7 +50,9 @@ const mockOperations: Operations = {
     operationId: "createUser",
     method: "post",
     path: "/users",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         name: z.string().min(1),
@@ -81,7 +76,9 @@ const mockOperations: Operations = {
     operationId: "simpleGet",
     method: "get",
     path: "/simple",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: undefined,
     responses: {
       "204": {
@@ -174,7 +171,7 @@ describe("createClient", () => {
 
     const client = createClient("https://api.example.com", mockOperations);
 
-    const result = await client.getUser({ id: "user123" });
+    const result = await client.getUser({ params: { id: "user123" } });
 
     expect(result).toEqual({
       id: "user123",

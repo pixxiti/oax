@@ -14,18 +14,15 @@ describe("createKyValidationHooks", () => {
   let hooks: KyValidationHooks;
   let consoleSpy: any;
 
-  const mockOperation: Operation = {
+  const mockOperation = {
     operationId: "testOperation",
     method: "post",
     path: "/test",
-    parameters: [
-      {
-        name: "id",
-        in: "query",
-        required: true,
-        schema: z.string().min(1),
-      },
-    ],
+    params: z.object({
+      type: z.literal("dog"),
+    }),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         name: z.string().min(1),
@@ -42,7 +39,7 @@ describe("createKyValidationHooks", () => {
         }),
       },
     },
-  };
+  } as const satisfies Operation;
 
   beforeEach(() => {
     helpers = createValidationHelpers();
@@ -74,8 +71,8 @@ describe("createKyValidationHooks", () => {
       });
 
       mockOptions = {
-        params: { id: "test123" },
-        body: {
+        inputs: { params: { type: "dog" } },
+        json: {
           name: "John Doe",
           email: "john@example.com",
         },
@@ -89,7 +86,7 @@ describe("createKyValidationHooks", () => {
     });
 
     it("should validate request parameters and throw ValidationError on failure", () => {
-      mockOptions.params = { id: "" }; // fails validation
+      mockOptions.inputs = { params: { id: "" } }; // fails validation
 
       expect(() => {
         hooks.beforeRequest(mockRequest, mockOptions, mockOperation);
@@ -369,8 +366,8 @@ describe("createKyValidationHooks", () => {
       });
 
       const mockOptions = {
-        params: { id: "" }, // fails validation
-        body: {
+        inputs: { params: { type: "" } }, // fails validation
+        json: {
           name: "John Doe",
           email: "john@example.com",
         },

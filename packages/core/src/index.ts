@@ -32,7 +32,9 @@ export interface Operation {
   operationId: string;
   summary?: string;
   description?: string;
-  parameters: readonly OperationParameter[];
+  params: any;
+  queries: any;
+  headers: any;
   requestBody?: OperationRequestBody;
   responses: Record<string, OperationResponse>;
 }
@@ -73,46 +75,78 @@ export class ValidationError extends Error {
 }
 
 export interface ValidationHelpers {
-  validateRequestParams?: (params: unknown, operation: Operation) => unknown;
+  validateRequestParams?: (inputs: unknown, operation: Operation) => unknown;
   validateRequestBody?: (body: unknown, operation: Operation) => unknown;
   validateResponseData?: (data: unknown, operation: Operation, status?: string) => unknown;
 }
 
 export function createValidationHelpers(): ValidationHelpers {
   return {
-    validateRequestParams: (params: unknown, operation: Operation) => {
-      if (!params || !operation.parameters || operation.parameters.length === 0) {
-        return params;
+    validateRequestParams: (inputs: unknown, operation: Operation) => {
+      if (!inputs) {
+        return inputs;
       }
 
       const validationErrors: ZodError["issues"] = [];
+      const typedInputs = inputs as { params?: any; queries?: any; headers?: any };
 
-      for (const param of operation.parameters) {
-        if (param.schema && typeof param.schema === "object" && "safeParse" in param.schema) {
-          const value = (params as any)?.[param.name];
+      // Validate path parameters
+      if (
+        operation.params &&
+        typeof operation.params === "object" &&
+        "safeParse" in operation.params
+      ) {
+        const result = (operation.params as ZodType).safeParse(typedInputs.params || {});
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            validationErrors.push({
+              ...issue,
+              path: ["params", ...issue.path],
+            });
+          }
+        }
+      }
 
-          // Only validate if parameter is required OR if it's optional but provided
-          if (param.required || value !== undefined) {
-            const result = (param.schema as ZodType).safeParse(value);
+      // Validate query parameters
+      if (
+        operation.queries &&
+        typeof operation.queries === "object" &&
+        "safeParse" in operation.queries
+      ) {
+        const result = (operation.queries as ZodType).safeParse(typedInputs.queries || {});
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            validationErrors.push({
+              ...issue,
+              path: ["queries", ...issue.path],
+            });
+          }
+        }
+      }
 
-            if (!result.success) {
-              for (const issue of result.error.issues) {
-                validationErrors.push({
-                  ...issue,
-                  path: [param.name, ...issue.path],
-                });
-              }
-            }
+      // Validate header parameters
+      if (
+        operation.headers &&
+        typeof operation.headers === "object" &&
+        "safeParse" in operation.headers
+      ) {
+        const result = (operation.headers as ZodType).safeParse(typedInputs.headers || {});
+        if (!result.success) {
+          for (const issue of result.error.issues) {
+            validationErrors.push({
+              ...issue,
+              path: ["headers", ...issue.path],
+            });
           }
         }
       }
 
       if (validationErrors.length > 0) {
         const zodError = { issues: validationErrors } as ZodError;
-        throw new ValidationError("request", operation.operationId, zodError, params);
+        throw new ValidationError("request", operation.operationId, zodError, inputs);
       }
 
-      return params;
+      return inputs;
     },
 
     validateRequestBody: (body: unknown, operation: Operation) => {
@@ -169,8 +203,8 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
         return request;
 
       try {
-        if ((options as any).params) {
-          helpers.validateRequestParams((options as any).params, operation);
+        if ((options as any).inputs) {
+          helpers.validateRequestParams((options as any).inputs, operation);
         }
 
         const contentType = request.headers.get("content-type");
@@ -218,20 +252,29 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
 }
 
 // Type helpers for operation inference
-type InferOperationParams<T extends Operation> =
-  T["parameters"] extends readonly OperationParameter[]
-    ? T["parameters"] extends readonly []
+type InferPathParams<T extends Operation> = T["params"] extends { _output: infer O } ? O : never;
+type InferQueryParams<T extends Operation> = T["queries"] extends { _output: infer O } ? O : never;
+type InferHeaderParams<T extends Operation> = T["headers"] extends { _output: infer O } ? O : never;
+
+type InferOperationParams<T extends Operation> = [InferPathParams<T>] extends [never]
+  ? [InferQueryParams<T>] extends [never]
+    ? [InferHeaderParams<T>] extends [never]
       ? never
+      : { headers?: InferHeaderParams<T> }
+    : [InferHeaderParams<T>] extends [never]
+      ? { queries?: InferQueryParams<T> }
+      : { queries?: InferQueryParams<T>; headers?: InferHeaderParams<T> }
+  : [InferQueryParams<T>] extends [never]
+    ? [InferHeaderParams<T>] extends [never]
+      ? { params?: InferPathParams<T> }
+      : { params?: InferPathParams<T>; headers?: InferHeaderParams<T> }
+    : [InferHeaderParams<T>] extends [never]
+      ? { params?: InferPathParams<T>; queries?: InferQueryParams<T> }
       : {
-          [P in T["parameters"][number] as P["name"]]: P["required"] extends true
-            ? P["schema"] extends { _output: infer O }
-              ? O
-              : any
-            : P["schema"] extends { _output: infer O }
-              ? O | undefined
-              : any | undefined;
-        }
-    : never;
+          params?: InferPathParams<T>;
+          queries?: InferQueryParams<T>;
+          headers?: InferHeaderParams<T>;
+        };
 
 type InferOperationBody<T extends Operation> = T["requestBody"] extends OperationRequestBody
   ? T["requestBody"]["required"] extends true
@@ -288,38 +331,16 @@ export type BodyById<T extends Operations, K extends keyof T> = T[K] extends Ope
   ? InferOperationBody<T[K]>
   : never;
 
-export type ParamsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+export type InputsById<T extends Operations, K extends keyof T> = T[K] extends Operation
   ? InferOperationParams<T[K]>
   : never;
 
 export type QueriesById<T extends Operations, K extends keyof T> = T[K] extends Operation
-  ? T[K]["parameters"] extends readonly OperationParameter[]
-    ? T[K]["parameters"] extends readonly []
+  ? T[K]["queries"] extends { _output: infer O }
+    ? O extends Record<string, never>
       ? never
-      : {
-            [P in T[K]["parameters"][number] as P["in"] extends "query"
-              ? P["name"]
-              : never]: P["required"] extends true
-              ? P["schema"] extends { _output: infer O }
-                ? O
-                : any
-              : P["schema"] extends { _output: infer O }
-                ? O | undefined
-                : any | undefined;
-          } extends Record<string, never>
-        ? never
-        : {
-            [P in T[K]["parameters"][number] as P["in"] extends "query"
-              ? P["name"]
-              : never]: P["required"] extends true
-              ? P["schema"] extends { _output: infer O }
-                ? O
-                : any
-              : P["schema"] extends { _output: infer O }
-                ? O | undefined
-                : any | undefined;
-          }
-    : never
+      : O
+    : any
   : never;
 
 export type ResponseById<T extends Operations, K extends keyof T> = T[K] extends Operation
@@ -350,85 +371,39 @@ export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends O
     : never
   : never;
 
-export type PathParamsById<T extends Operations, K extends keyof T> = T[K] extends Operation
-  ? T[K]["parameters"] extends readonly OperationParameter[]
-    ? T[K]["parameters"] extends readonly []
+export type ParamsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? T[K]["params"] extends { _output: infer O }
+    ? O extends Record<string, never>
       ? never
-      : {
-            [P in T[K]["parameters"][number] as P["in"] extends "path"
-              ? P["name"]
-              : never]: P["required"] extends true
-              ? P["schema"] extends { _output: infer O }
-                ? O
-                : any
-              : P["schema"] extends { _output: infer O }
-                ? O | undefined
-                : any | undefined;
-          } extends Record<string, never>
-        ? never
-        : {
-            [P in T[K]["parameters"][number] as P["in"] extends "path"
-              ? P["name"]
-              : never]: P["required"] extends true
-              ? P["schema"] extends { _output: infer O }
-                ? O
-                : any
-              : P["schema"] extends { _output: infer O }
-                ? O | undefined
-                : any | undefined;
-          }
+      : O
     : never
   : never;
 
 export type HeadersById<T extends Operations, K extends keyof T> = T[K] extends Operation
-  ? T[K]["parameters"] extends readonly OperationParameter[]
-    ? T[K]["parameters"] extends readonly []
-      ? never
-      : {
-            [P in T[K]["parameters"][number] as P["in"] extends "header"
-              ? P["name"]
-              : never]: P["required"] extends true
-              ? P["schema"] extends { _output: infer O }
-                ? O
-                : any
-              : P["schema"] extends { _output: infer O }
-                ? O | undefined
-                : any | undefined;
-          } extends Record<string, never>
-        ? never
-        : {
-            [P in T[K]["parameters"][number] as P["in"] extends "header"
-              ? P["name"]
-              : never]: P["required"] extends true
-              ? P["schema"] extends { _output: infer O }
-                ? O
-                : any
-              : P["schema"] extends { _output: infer O }
-                ? O | undefined
-                : any | undefined;
-          }
-    : never
+  ? T[K]["headers"] extends { _output: infer O }
+    ? O
+    : any
   : never;
 
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
     ? T[K]["requestBody"] extends OperationRequestBody
-      ? InferOperationParams<T[K]> extends never
-        ? (body: InferOperationBody<T[K]>) => Promise<InferOperationResponse<T[K]>>
-        : (
-            params: InferOperationParams<T[K]>,
-            body: InferOperationBody<T[K]>
-          ) => Promise<InferOperationResponse<T[K]>>
-      : T[K]["parameters"] extends readonly OperationParameter[]
-        ? T[K]["parameters"] extends readonly []
-          ? () => Promise<InferOperationResponse<T[K]>>
-          : (params: InferOperationParams<T[K]>) => Promise<InferOperationResponse<T[K]>>
-        : () => Promise<InferOperationResponse<T[K]>>
+      ? (
+          inputs: InferOperationParams<T[K]>,
+          body: InferOperationBody<T[K]>
+        ) => Promise<InferOperationResponse<T[K]>>
+      : InferOperationParams<T[K]> extends never
+        ? () => Promise<InferOperationResponse<T[K]>>
+        : (inputs: InferOperationParams<T[K]>) => Promise<InferOperationResponse<T[K]>>
     : never;
 } & {
   ky: typeof ky;
-  request: (operationId: string, params?: any, body?: any) => Promise<any>;
+  request: (
+    operationId: string,
+    inputs?: { params?: any; queries?: any; headers?: any },
+    body?: any
+  ) => Promise<any>;
 };
 
 export class ApiClient {
@@ -438,7 +413,6 @@ export class ApiClient {
 
   constructor(baseUrl: string, operations: Operations, options?: Omit<ClientOptions, "baseUrl">) {
     this.operations = operations;
-    this.headers = options?.headers ?? {};
 
     const shouldValidate = options?.validate !== false;
 
@@ -475,7 +449,15 @@ export class ApiClient {
     });
   }
 
-  async request(operationId: string, params?: any, body?: any): Promise<any> {
+  async request(
+    operationId: string,
+    inputs?: {
+      params?: any;
+      queries?: any;
+      headers?: any;
+    },
+    body?: any
+  ): Promise<any> {
     const operation = this.operations[operationId];
     if (!operation) {
       throw new Error(`Operation ${operationId} not found`);
@@ -486,20 +468,30 @@ export class ApiClient {
     const searchParams = new URLSearchParams();
     const headers: Record<string, string> = {};
 
-    // Handle parameters
-    if (params && operation.parameters) {
-      for (const param of operation.parameters) {
-        const value = params[param.name];
-        if (value !== undefined) {
-          if (param.in === "path") {
-            url = url.replace(`{${param.name}}`, encodeURIComponent(String(value)));
-          } else if (param.in === "query") {
-            searchParams.set(param.name, String(value));
-          } else if (param.in === "header") {
-            headers[param.name] = String(value);
-          }
-        } else if (param.required) {
-          throw new Error(`Required parameter ${param.name} is missing`);
+    // Handle path parameters
+    if (inputs?.params) {
+      for (const [paramName, value] of Object.entries(inputs.params)) {
+        if (value === undefined || value === null) {
+          throw new Error(`Required path parameter ${paramName} is missing`);
+        }
+        url = url.replace(`{${paramName}}`, encodeURIComponent(String(value)));
+      }
+    }
+
+    // Handle query parameters
+    if (inputs?.queries) {
+      for (const [queryName, value] of Object.entries(inputs.queries)) {
+        if (value !== undefined && value !== null) {
+          searchParams.set(queryName, String(value));
+        }
+      }
+    }
+
+    // Handle header parameters
+    if (inputs?.headers) {
+      for (const [headerName, value] of Object.entries(inputs.headers)) {
+        if (value !== undefined && value !== null) {
+          headers[headerName] = String(value);
         }
       }
     }
@@ -509,7 +501,7 @@ export class ApiClient {
       headers,
       searchParams,
       operation, // Pass operation to hooks
-      params, // Pass params for validation
+      inputs, // Pass params for validation
     };
 
     if (body && operation.requestBody) {
@@ -550,14 +542,16 @@ export function createClient<T extends Operations>(
   const client = new ApiClient(baseUrl, operations, options);
 
   // Add typed methods for each operation
-  for (const [operationId, operation] of Object.entries(operations)) {
-    (client as any)[operationId] = (paramsOrBody?: any, body?: any) => {
-      // If operation has requestBody but no parameters, treat first arg as body
-      if (operation.requestBody && (!operation.parameters || operation.parameters.length === 0)) {
-        return client.request(operationId, undefined, paramsOrBody);
-      }
-      // Otherwise, treat args as (params, body)
-      return client.request(operationId, paramsOrBody, body);
+  for (const [operationId] of Object.entries(operations)) {
+    (client as any)[operationId] = (
+      inputs?: {
+        params?: any;
+        queries?: any;
+        headers?: any;
+      },
+      body?: any
+    ) => {
+      return client.request(operationId, inputs, body);
     };
   }
 

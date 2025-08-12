@@ -4,7 +4,7 @@ import "./App.css";
 
 function App() {
   const [petId, setPetId] = useState(1);
-  const { data: pet, isLoading, error } = hooks.getPetById({ params: { petId } });
+  const { data: pet, isPending, error } = hooks.getPetById({ params: { petId } });
 
   return (
     <div className="app">
@@ -26,7 +26,7 @@ function App() {
         </label>
       </div>
 
-      {isLoading && <div className="loading">Loading pet data...</div>}
+      {isPending && <div className="loading">Loading pet data...</div>}
 
       {error && (
         <div className="error">

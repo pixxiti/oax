@@ -71,14 +71,11 @@ describe("Integration Tests", () => {
       operationId: "getPetById",
       method: "get",
       path: "/pet/{petId}",
-      parameters: [
-        {
-          name: "petId",
-          in: "path",
-          required: true,
-          schema: z.number().int().positive(),
-        },
-      ],
+      params: z.object({
+        petId: z.number().int().positive(),
+      }),
+      queries: z.object({}),
+      headers: z.object({}),
       requestBody: undefined,
       responses: {
         "200": {
@@ -118,7 +115,9 @@ describe("Integration Tests", () => {
       operationId: "addPet",
       method: "post",
       path: "/pet",
-      parameters: [],
+      params: z.object({}),
+      queries: z.object({}),
+      headers: z.object({}),
       requestBody: {
         schema: z.object({
           id: z.number().int().positive().optional(),
@@ -157,26 +156,14 @@ describe("Integration Tests", () => {
       operationId: "updatePetWithForm",
       method: "post",
       path: "/pet/{petId}",
-      parameters: [
-        {
-          name: "petId",
-          in: "path",
-          required: true,
-          schema: z.number().int().positive(),
-        },
-        {
-          name: "name",
-          in: "query",
-          required: false,
-          schema: z.string().optional(),
-        },
-        {
-          name: "status",
-          in: "query",
-          required: false,
-          schema: z.enum(["available", "pending", "sold"]).optional(),
-        },
-      ],
+      params: z.object({
+        petId: z.number().int().positive(),
+      }),
+      queries: z.object({
+        name: z.string().optional(),
+        status: z.enum(["available", "pending", "sold"]).optional(),
+      }),
+      headers: z.object({}),
       requestBody: undefined,
       responses: {
         "200": {
@@ -217,7 +204,7 @@ describe("Integration Tests", () => {
 
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
-      const result = await client.getPetById({ petId: 123 });
+      const result = await client.getPetById({ params: { petId: 123 } });
 
       expect(result).toEqual(mockPetData);
       expect(ky.default).toHaveBeenCalledWith(
@@ -233,7 +220,7 @@ describe("Integration Tests", () => {
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
       try {
-        await client.getPetById({ petId: -1 }); // negative ID fails validation
+        await client.getPetById({ params: { petId: -1 } }); // negative ID fails validation
         expect.fail("Should have thrown ValidationError");
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
@@ -258,7 +245,7 @@ describe("Integration Tests", () => {
       };
 
       try {
-        await client.addPet(invalidPet);
+        await client.addPet({}, invalidPet);
         expect.fail("Should have thrown ValidationError");
       } catch (error) {
         expect(error).toBeInstanceOf(ValidationError);
@@ -288,10 +275,9 @@ describe("Integration Tests", () => {
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
       try {
-        await client.getPetById({ petId: 123 });
+        await client.getPetById({ params: { petId: 123 } });
         // expect.fail("Should have thrown ValidationError");
       } catch (error) {
-        console.log(error, typeof error);
         expect(error).toBeInstanceOf(ValidationError);
         const validationError = error as ValidationError;
         expect(validationError.type).toBe("response");
@@ -321,7 +307,7 @@ describe("Integration Tests", () => {
       });
 
       // These would normally fail validation but should pass with validation disabled
-      const result = await client.getPetById({ petId: -1 });
+      const result = await client.getPetById({ params: { petId: -1 } });
 
       expect(result).toEqual(invalidData);
       expect(consoleSpy).not.toHaveBeenCalled();
@@ -341,9 +327,8 @@ describe("Integration Tests", () => {
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
       await client.updatePetWithForm({
-        petId: 123,
-        name: "NewName",
-        status: "pending",
+        params: { petId: 123 },
+        queries: { name: "NewName", status: "pending" },
       });
 
       // Verify URL construction and parameter handling
@@ -393,7 +378,7 @@ describe("Integration Tests", () => {
       const helpers = createValidationHelpers();
 
       // Test parameter validation
-      const validParams = { petId: 123 };
+      const validParams = { params: { petId: 123 } };
       const result1 = helpers.validateRequestParams?.(validParams, petStoreOperations.getPetById);
       expect(result1).toBe(validParams);
 
@@ -430,7 +415,9 @@ describe("Integration Tests", () => {
         operationId: "simple",
         method: "get" as const,
         path: "/simple",
-        parameters: [] as const,
+        params: z.object({}),
+        queries: z.object({}),
+        headers: z.object({}),
         responses: {
           "200": {
             description: "OK",
@@ -450,7 +437,7 @@ describe("Integration Tests", () => {
 
       const client = createClient("https://example.com", { simple: simpleOperation });
 
-      const result = await client.simple();
+      const result = await client.simple({});
       expect(result).toBe("simple response");
     });
 
@@ -459,20 +446,17 @@ describe("Integration Tests", () => {
         operationId: "noSchema",
         method: "delete" as const,
         path: "/resource/{id}",
-        parameters: [
-          {
-            name: "id",
-            in: "path" as const,
-            required: true,
-            schema: z.string(),
-          },
-        ],
+        params: z.object({
+          id: z.string(),
+        }),
+        queries: z.object({}),
+        headers: z.object({}),
         responses: {
           "204": {
             description: "No content",
           },
         },
-      };
+      } as const;
 
       const ky = await import("ky");
       const mockResponse = {
@@ -486,7 +470,7 @@ describe("Integration Tests", () => {
 
       const client = createClient("https://example.com", { noSchema: noSchemaOperation });
 
-      const result = await client.noSchema({ id: "test123" });
+      const result = await client.noSchema({ params: { id: "test123" } });
       expect(result).toBeUndefined();
     });
 

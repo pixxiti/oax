@@ -28,14 +28,11 @@ const mockOperations = {
     method: "get",
     path: "/pets/{petId}",
     operationId: "getPetById",
-    parameters: [
-      {
-        name: "petId",
-        in: "path",
-        required: true,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({
+      petId: z.string(),
+    }),
+    queries: z.object({}),
+    headers: z.object({}),
     responses: {
       "200": {
         description: "Pet details",
@@ -47,20 +44,12 @@ const mockOperations = {
     method: "get",
     path: "/users",
     operationId: "getUsersByStatus",
-    parameters: [
-      {
-        name: "status",
-        in: "query",
-        required: false,
-        schema: z.string(),
-      },
-      {
-        name: "limit",
-        in: "query",
-        required: false,
-        schema: z.number(),
-      },
-    ],
+    params: z.object({}),
+    queries: z.object({
+      status: z.string().optional(),
+      limit: z.number().optional(),
+    }),
+    headers: z.object({}),
     responses: {
       "200": {
         description: "List of users",
@@ -72,7 +61,9 @@ const mockOperations = {
     method: "post",
     path: "/pets",
     operationId: "createPet",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       required: true,
       schema: z.object({ name: z.string(), species: z.string() }),
@@ -199,20 +190,13 @@ describe("createHooks", () => {
         method: "get",
         path: "/users/{userId}/pets",
         operationId: "getUserPets",
-        parameters: [
-          {
-            name: "userId",
-            in: "path",
-            required: true,
-            schema: z.string(),
-          },
-          {
-            name: "status",
-            in: "query",
-            required: false,
-            schema: z.string(),
-          },
-        ],
+        params: z.object({
+          userId: z.string(),
+        }),
+        queries: z.object({
+          status: z.string().optional(),
+        }),
+        headers: z.object({}),
         responses: {
           "200": {
             description: "User pets",
@@ -334,20 +318,14 @@ describe("createHooks", () => {
           method: "get",
           path: "/users/{userId}/pets",
           operationId: "getUserPets",
-          parameters: [
-            {
-              name: "userId",
-              in: "path",
-              required: true,
-              schema: z.string(),
-            },
-            {
-              name: "status",
-              in: "query",
-              required: false,
-              schema: z.string(),
-            },
-          ],
+
+          params: z.object({
+            userId: z.string(),
+          }),
+          queries: z.object({
+            status: z.string().optional(),
+          }),
+          headers: z.object({}),
           responses: {
             "200": {
               description: "User pets",
@@ -388,20 +366,12 @@ describe("createHooks", () => {
           method: "get",
           path: "/protected",
           operationId: "getProtectedData",
-          parameters: [
-            {
-              name: "authorization",
-              in: "header",
-              required: true,
-              schema: z.string(),
-            },
-            {
-              name: "x-api-key",
-              in: "header",
-              required: false,
-              schema: z.string(),
-            },
-          ],
+          params: z.object({}),
+          queries: z.object({}),
+          headers: z.object({
+            authorization: z.string(),
+            "x-api-key": z.string(),
+          }),
           responses: {
             "200": {
               description: "Protected data",
@@ -441,26 +411,15 @@ describe("createHooks", () => {
           method: "get",
           path: "/data/{id}",
           operationId: "getComplexData",
-          parameters: [
-            {
-              name: "id",
-              in: "path",
-              required: true,
-              schema: z.string(),
-            },
-            {
-              name: "filter",
-              in: "query",
-              required: false,
-              schema: z.string(),
-            },
-            {
-              name: "authorization",
-              in: "header",
-              required: true,
-              schema: z.string(),
-            },
-          ],
+          params: z.object({
+            id: z.string(),
+          }),
+          queries: z.object({
+            filter: z.string().optional(),
+          }),
+          headers: z.object({
+            authorization: z.string(),
+          }),
           responses: {
             "200": {
               description: "Complex data",

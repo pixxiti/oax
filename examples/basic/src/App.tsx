@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import type { z } from "zod/v4";
 import { createClient } from "@zoddy/core";
+import { useCallback, useEffect, useState } from "react";
+import type { z } from "zod/v4";
 import { operations, type schemas } from "./api/client";
 import "./App.css";
 
@@ -22,7 +22,7 @@ function App() {
 
       // This call is fully typed! TypeScript knows the parameter structure
       // and return type based on the OpenAPI spec
-      const result = await client.getPetById({ petId: id });
+      const result = await client.getPetById({ params: { petId: id } });
       setPet(result);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch pet");
@@ -125,13 +125,13 @@ function App() {
         <div className="code-example">
           <pre>
             {`// TypeScript knows exactly what parameters are required:
-await client.getPetById({ petId: 1 });
+await client.getPetById({ params: { petId: 1 } });
 
 // TypeScript will error if you pass wrong parameters:
-// await client.getPetById({ wrongParam: 1 }); // ❌ Type error!
+// await client.getPetById({ params: { wrongParam: 1 } }); // ❌ Type error!
 
 // TypeScript knows the return type structure:
-const pet = await client.getPetById({ petId: 1 });
+const pet = await client.getPetById({ params: { petId: 1 } });
 console.log(pet.name);    // ✅ TypeScript knows this exists
 console.log(pet.status);  // ✅ TypeScript knows this is "available" | "pending" | "sold"`}
           </pre>

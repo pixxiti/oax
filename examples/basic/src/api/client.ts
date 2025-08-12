@@ -34,16 +34,14 @@ export const Tag = z.object({
 export const Pet = z.object({
   id: z.number().int().optional(),
   name: z.string(),
-  category: z
-    .object({ id: z.number().int().optional(), name: z.string().optional() })
-    .optional(),
+  category: z.object({ id: z.number().int().optional(), name: z.string().optional() }).optional(),
   photoUrls: z.array(z.string()),
   tags: z
     .array(
       z.object({
         id: z.number().int().optional(),
         name: z.string().optional(),
-      }),
+      })
     )
     .optional(),
   status: z.enum(["available", "pending", "sold"]).optional(),
@@ -71,7 +69,9 @@ export const operations = {
     operationId: "addPet",
     summary: "Add a new pet to the store.",
     description: "Add a new pet to the store.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         id: z.number().int().optional(),
@@ -88,7 +88,7 @@ export const operations = {
             z.object({
               id: z.number().int().optional(),
               name: z.string().optional(),
-            }),
+            })
           )
           .optional(),
         status: z.enum(["available", "pending", "sold"]).optional(),
@@ -113,7 +113,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              }),
+              })
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -139,7 +139,9 @@ export const operations = {
     operationId: "updatePet",
     summary: "Update an existing pet.",
     description: "Update an existing pet by Id.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         id: z.number().int().optional(),
@@ -156,7 +158,7 @@ export const operations = {
             z.object({
               id: z.number().int().optional(),
               name: z.string().optional(),
-            }),
+            })
           )
           .optional(),
         status: z.enum(["available", "pending", "sold"]).optional(),
@@ -181,7 +183,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              }),
+              })
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -210,16 +212,10 @@ export const operations = {
     path: "/pet/findByStatus",
     operationId: "findPetsByStatus",
     summary: "Finds Pets by status.",
-    description:
-      "Multiple status values can be provided with comma separated strings.",
-    parameters: [
-      {
-        name: "status",
-        in: "query",
-        required: true,
-        schema: z.enum(["available", "pending", "sold"]),
-      },
-    ],
+    description: "Multiple status values can be provided with comma separated strings.",
+    params: z.object({}),
+    queries: z.object({ status: z.enum(["available", "pending", "sold"]) }),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -240,11 +236,11 @@ export const operations = {
                 z.object({
                   id: z.number().int().optional(),
                   name: z.string().optional(),
-                }),
+                })
               )
               .optional(),
             status: z.enum(["available", "pending", "sold"]).optional(),
-          }),
+          })
         ),
       },
       "400": {
@@ -264,14 +260,9 @@ export const operations = {
     summary: "Finds Pets by tags.",
     description:
       "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
-    parameters: [
-      {
-        name: "tags",
-        in: "query",
-        required: true,
-        schema: z.array(z.string()),
-      },
-    ],
+    params: z.object({}),
+    queries: z.object({ tags: z.array(z.string()) }),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -292,11 +283,11 @@ export const operations = {
                 z.object({
                   id: z.number().int().optional(),
                   name: z.string().optional(),
-                }),
+                })
               )
               .optional(),
             status: z.enum(["available", "pending", "sold"]).optional(),
-          }),
+          })
         ),
       },
       "400": {
@@ -315,14 +306,9 @@ export const operations = {
     operationId: "getPetById",
     summary: "Find pet by ID.",
     description: "Returns a single pet.",
-    parameters: [
-      {
-        name: "petId",
-        in: "path",
-        required: true,
-        schema: z.number().int(),
-      },
-    ],
+    params: z.object({ petId: z.number().int() }),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -342,7 +328,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              }),
+              })
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -368,26 +354,12 @@ export const operations = {
     operationId: "updatePetWithForm",
     summary: "Updates a pet in the store with form data.",
     description: "Updates a pet resource based on the form data.",
-    parameters: [
-      {
-        name: "petId",
-        in: "path",
-        required: true,
-        schema: z.number().int(),
-      },
-      {
-        name: "name",
-        in: "query",
-        required: false,
-        schema: z.string(),
-      },
-      {
-        name: "status",
-        in: "query",
-        required: false,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({ petId: z.number().int() }),
+    queries: z.object({
+      name: z.string().optional(),
+      status: z.string().optional(),
+    }),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -407,7 +379,7 @@ export const operations = {
               z.object({
                 id: z.number().int().optional(),
                 name: z.string().optional(),
-              }),
+              })
             )
             .optional(),
           status: z.enum(["available", "pending", "sold"]).optional(),
@@ -429,20 +401,9 @@ export const operations = {
     operationId: "deletePet",
     summary: "Deletes a pet.",
     description: "Delete a pet.",
-    parameters: [
-      {
-        name: "api_key",
-        in: "header",
-        required: false,
-        schema: z.string(),
-      },
-      {
-        name: "petId",
-        in: "path",
-        required: true,
-        schema: z.number().int(),
-      },
-    ],
+    params: z.object({ petId: z.number().int() }),
+    queries: z.object({}),
+    headers: z.object({ api_key: z.string().optional() }),
 
     responses: {
       "200": {
@@ -465,20 +426,9 @@ export const operations = {
     operationId: "uploadFile",
     summary: "Uploads an image.",
     description: "Upload image of the pet.",
-    parameters: [
-      {
-        name: "petId",
-        in: "path",
-        required: true,
-        schema: z.number().int(),
-      },
-      {
-        name: "additionalMetadata",
-        in: "query",
-        required: false,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({ petId: z.number().int() }),
+    queries: z.object({ additionalMetadata: z.string().optional() }),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -509,7 +459,9 @@ export const operations = {
     operationId: "getInventory",
     summary: "Returns pet inventories by status.",
     description: "Returns a map of status codes to quantities.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -528,7 +480,9 @@ export const operations = {
     operationId: "placeOrder",
     summary: "Place an order for a pet.",
     description: "Place a new order in the store.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         id: z.number().int().optional(),
@@ -573,14 +527,9 @@ export const operations = {
     summary: "Find purchase order by ID.",
     description:
       "For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.",
-    parameters: [
-      {
-        name: "orderId",
-        in: "path",
-        required: true,
-        schema: z.number().int(),
-      },
-    ],
+    params: z.object({ orderId: z.number().int() }),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -615,14 +564,9 @@ export const operations = {
     summary: "Delete purchase order by identifier.",
     description:
       "For valid response try integer IDs with value < 1000. Anything above 1000 or non-integers will generate API errors.",
-    parameters: [
-      {
-        name: "orderId",
-        in: "path",
-        required: true,
-        schema: z.number().int(),
-      },
-    ],
+    params: z.object({ orderId: z.number().int() }),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -649,7 +593,9 @@ export const operations = {
     operationId: "createUser",
     summary: "Create user.",
     description: "This can only be done by the logged in user.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         id: z.number().int().optional(),
@@ -689,7 +635,9 @@ export const operations = {
     operationId: "createUsersWithListInput",
     summary: "Creates list of users with given input array.",
     description: "Creates list of users with given input array.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.array(
         z.object({
@@ -701,7 +649,7 @@ export const operations = {
           password: z.string().optional(),
           phone: z.string().optional(),
           userStatus: z.number().int().optional(),
-        }),
+        })
       ),
       required: false,
     },
@@ -731,20 +679,12 @@ export const operations = {
     operationId: "loginUser",
     summary: "Logs user into the system.",
     description: "Log into the system.",
-    parameters: [
-      {
-        name: "username",
-        in: "query",
-        required: false,
-        schema: z.string(),
-      },
-      {
-        name: "password",
-        in: "query",
-        required: false,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({}),
+    queries: z.object({
+      username: z.string().optional(),
+      password: z.string().optional(),
+    }),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -767,7 +707,9 @@ export const operations = {
     operationId: "logoutUser",
     summary: "Logs out current logged in user session.",
     description: "Log user out of the system.",
-    parameters: [],
+    params: z.object({}),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -786,14 +728,9 @@ export const operations = {
     operationId: "getUserByName",
     summary: "Get user by user name.",
     description: "Get user detail based on username.",
-    parameters: [
-      {
-        name: "username",
-        in: "path",
-        required: true,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({ username: z.string() }),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -829,14 +766,9 @@ export const operations = {
     operationId: "updateUser",
     summary: "Update user resource.",
     description: "This can only be done by the logged in user.",
-    parameters: [
-      {
-        name: "username",
-        in: "path",
-        required: true,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({ username: z.string() }),
+    queries: z.object({}),
+    headers: z.object({}),
     requestBody: {
       schema: z.object({
         id: z.number().int().optional(),
@@ -875,14 +807,9 @@ export const operations = {
     operationId: "deleteUser",
     summary: "Delete user resource.",
     description: "This can only be done by the logged in user.",
-    parameters: [
-      {
-        name: "username",
-        in: "path",
-        required: true,
-        schema: z.string(),
-      },
-    ],
+    params: z.object({ username: z.string() }),
+    queries: z.object({}),
+    headers: z.object({}),
 
     responses: {
       "200": {
@@ -907,9 +834,6 @@ export const operations = {
 
 export type Operations = typeof operations;
 
-export function createClient(
-  baseUrl: string,
-  options?: { headers?: Record<string, string> },
-) {
+export function createClient(baseUrl: string, options?: { headers?: Record<string, string> }) {
   return createRuntimeClient(baseUrl, operations, options);
 }

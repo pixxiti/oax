@@ -31,30 +31,19 @@ describe("createValidationHelpers", () => {
   };
 
   describe("validateRequestParams", () => {
-    const operation: Operation = {
+    const operation = {
       operationId: "testOperation",
       method: "get",
       path: "/test/{id}",
-      parameters: [
-        {
-          name: "id",
-          in: "path",
-          required: true,
-          schema: z.string(),
-        },
-        {
-          name: "limit",
-          in: "query",
-          required: false,
-          schema: z.number().int().min(1).max(100),
-        },
-        {
-          name: "authorization",
-          in: "header",
-          required: true,
-          schema: z.string().min(1),
-        },
-      ],
+      params: z.object({
+        id: z.string().min(1),
+      }),
+      queries: z.object({
+        limit: z.number().int().min(1).max(100).optional(),
+      }),
+      headers: z.object({
+        authorization: z.string().min(1),
+      }),
       requestBody: undefined,
       responses: {
         "200": {
@@ -62,96 +51,82 @@ describe("createValidationHelpers", () => {
           schema: z.object({ message: z.string() }),
         },
       },
-    };
+    } as const satisfies Operation;
 
     it("should validate valid parameters successfully", () => {
-      const params = {
-        id: "123",
-        limit: 50,
-        authorization: "Bearer token123",
+      const inputs = {
+        params: { id: "123" },
+        queries: { limit: 50 },
+        headers: { authorization: "Bearer token123" },
       };
 
-      const result = assertValidateRequestParams(helpers)(params, operation);
-      expect(result).toBe(params);
+      const result = assertValidateRequestParams(helpers)(inputs, operation);
+      expect(result).toBe(inputs);
     });
 
     it("should validate when optional parameters are missing", () => {
-      const params = {
-        id: "123",
-        authorization: "Bearer token123",
+      const inputs = {
+        params: { id: "123" },
+        headers: { authorization: "Bearer token123" },
       };
 
-      const result = assertValidateRequestParams(helpers)(params, operation);
-      expect(result).toBe(params);
+      const result = assertValidateRequestParams(helpers)(inputs, operation);
+      expect(result).toBe(inputs);
     });
 
     it("should throw ValidationError for missing required parameters", () => {
-      const params = {
-        id: "123",
+      const inputs = {
+        params: { id: "123" },
         // missing required authorization header
       };
 
       expect(() => {
-        assertValidateRequestParams(helpers)(params, operation);
+        assertValidateRequestParams(helpers)(inputs, operation);
       }).toThrow(ValidationError);
     });
 
     it("should throw ValidationError for invalid parameter types", () => {
-      const params = {
-        id: "123",
-        limit: "not-a-number", // should be number
-        authorization: "Bearer token123",
+      const inputs = {
+        params: { id: "123" },
+        queries: { limit: "not-a-number" }, // should be number
+        headers: { authorization: "Bearer token123" },
       };
 
       expect(() => {
-        assertValidateRequestParams(helpers)(params, operation);
+        assertValidateRequestParams(helpers)(inputs, operation);
       }).toThrow(ValidationError);
     });
 
     it("should throw ValidationError for parameters that fail schema validation", () => {
-      const params = {
-        id: "123",
-        limit: 150, // exceeds max of 100
-        authorization: "Bearer token123",
+      const inputs = {
+        params: { id: "123" },
+        queries: { limit: 150 }, // exceeds max of 100
+        headers: { authorization: "Bearer token123" },
       };
 
       expect(() => {
-        assertValidateRequestParams(helpers)(params, operation);
+        assertValidateRequestParams(helpers)(inputs, operation);
       }).toThrow(ValidationError);
     });
 
     it("should return params unchanged when no parameters in operation", () => {
       const operationWithoutParams: Operation = {
         ...operation,
-        parameters: [],
+        params: z.object({}),
       };
-      const params = { someData: "test" };
+      const inputs = {
+        params: { someData: "test" },
+        queries: { limit: 50 }, // exceeds max of 100
+        headers: { authorization: "Bearer token123" },
+      };
 
-      const result = assertValidateRequestParams(helpers)(params, operationWithoutParams);
-      expect(result).toBe(params);
+      const result = assertValidateRequestParams(helpers)(inputs, operationWithoutParams);
+      expect(result).toBe(inputs);
     });
 
     it("should return params unchanged when params is null", () => {
       const result = assertValidateRequestParams(helpers)(null, operation);
       expect(result).toBe(null);
-    });
-
-    it("should handle parameters without schemas gracefully", () => {
-      const operationWithoutSchemas: Operation = {
-        ...operation,
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            schema: null, // no schema
-          },
-        ],
-      };
-      const params = { id: "123" };
-
-      const result = assertValidateRequestParams(helpers)(params, operationWithoutSchemas);
-      expect(result).toBe(params);
     });
 
     it("should include parameter name in validation error path", () => {
@@ -179,7 +154,9 @@ describe("createValidationHelpers", () => {
       operationId: "createUser",
       method: "post",
       path: "/users",
-      parameters: [],
+      params: z.object({}),
+      queries: z.object({}),
+      headers: z.object({}),
       requestBody: {
         schema: z.object({
           name: z.string().min(1),
@@ -282,7 +259,11 @@ describe("createValidationHelpers", () => {
       operationId: "getUser",
       method: "get",
       path: "/users/{id}",
-      parameters: [],
+      params: z.object({
+        id: z.string(),
+      }),
+      queries: z.object({}),
+      headers: z.object({}),
       requestBody: undefined,
       responses: {
         "200": {
