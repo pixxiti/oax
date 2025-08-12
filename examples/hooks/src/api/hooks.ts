@@ -2,7 +2,7 @@ import { createHooks } from "@zoddy/hooks";
 
 import { createClient, operations } from "./client";
 
-const client = createClient("https://petstore.swagger.io/v2");
+const client = createClient("https://petstore3.swagger.io/api/v3/");
 
 export const hooks = createHooks({
   apiName: "petstore",

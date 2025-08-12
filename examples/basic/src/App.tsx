@@ -5,7 +5,11 @@ import { operations, type schemas } from "./api/client";
 import "./App.css";
 
 // Create typed client with full type safety
-const client = createClient("https://petstore.swagger.io/v2", operations);
+const client = createClient("https://petstore3.swagger.io/api/v3/", operations, {
+  headers: {
+    authorization: "Bearer 123",
+  },
+});
 
 type Pet = z.infer<typeof schemas.Pet>;
 
