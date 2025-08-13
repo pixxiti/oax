@@ -52,7 +52,7 @@ describe("Comprehensive OAS 3.0 Features", () => {
 
     it("should generate regex pattern validation", () => {
       expect(clientCode).toMatch(/\.regex\(\/.*\/\)/);
-      expect(clientCode).toContain('/^[a-zA-Z0-9_]+$/');
+      expect(clientCode).toContain("/^[a-zA-Z0-9_]+$/");
     });
   });
 
