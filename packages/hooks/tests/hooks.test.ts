@@ -92,9 +92,9 @@ describe("createHooks", () => {
       operations: mockOperations,
     });
 
-    expect(typeof hooks.getPetById).toBe("function");
-    expect(typeof hooks.getUsersByStatus).toBe("function");
-    expect(typeof hooks.createPet).toBe("function");
+    expect(typeof hooks.useGetPetById).toBe("function");
+    expect(typeof hooks.useGetUsersByStatus).toBe("function");
+    expect(typeof hooks.useCreatePet).toBe("function");
     expect(typeof hooks.getKey).toBe("function");
   });
 
@@ -105,7 +105,7 @@ describe("createHooks", () => {
       operations: mockOperations,
     });
 
-    const result = hooks.getPetById({ params: { petId: "1" } }, { enabled: true });
+    const result = hooks.useGetPetById({ params: { petId: "1" } }, { enabled: true });
 
     // Verify that the hook returns the expected useQuery properties
     expect(result).toHaveProperty("data");
@@ -122,7 +122,7 @@ describe("createHooks", () => {
       operations: mockOperations,
     });
 
-    const result = hooks.createPet();
+    const result = hooks.useCreatePet();
 
     result.mutate({ name: "Whiskers", species: "cat" });
 
@@ -143,7 +143,7 @@ describe("createHooks", () => {
     });
 
     // Test with query parameters using new structured format
-    const result = hooks.getUsersByStatus(
+    const result = hooks.useGetUsersByStatus(
       {
         queries: { status: "active", limit: 10 },
       },

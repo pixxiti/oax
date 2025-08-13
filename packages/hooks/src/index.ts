@@ -73,9 +73,14 @@ export type IsGetMethod<T> = T extends { method: infer M }
       : false
   : false;
 
-// Simpler approach - use the helper type
+// Helper to convert operation ID to camelCase hook name with "use" prefix
+type ToCamelCaseHookName<T extends string> = T extends `${infer First}${infer Rest}`
+  ? `use${Uppercase<First>}${Rest}`
+  : never;
+
+// Type for hooks with camelCase naming
 export type TypedHooks<T extends Operations> = {
-  [K in keyof T]: IsGetMethod<T[K]> extends true
+  [K in keyof T as ToCamelCaseHookName<string & K>]: IsGetMethod<T[K]> extends true
     ? QueryHookInterface<ResponseById<T, K>, QueryParams<T, K>>
     : MutationHookInterface<ResponseById<T, K>, MutationParams<T, K>>;
 };
@@ -117,6 +122,11 @@ export function generateQueryKey<T extends Operations, K extends keyof T>(
   return keyParts;
 }
 
+// Helper function to convert operation ID to camelCase hook name
+function toCamelCaseHookName(operationId: string): string {
+  return `use${operationId.charAt(0).toUpperCase()}${operationId.slice(1)}`;
+}
+
 export function createHooks<const T extends Operations>(
   options: HooksOptions & { operations: T }
 ): TypedHooks<T> & { getKey: GetKeyFunction<T> } {
@@ -126,9 +136,11 @@ export function createHooks<const T extends Operations>(
   for (const [operationId, operation] of Object.entries(operations)) {
     if (!operation || typeof operation !== "object" || !("method" in operation)) continue;
 
+    const hookName = toCamelCaseHookName(operationId);
     const typedOperation = operation as Operation;
+    
     if (typedOperation.method === "get") {
-      hooks[operationId] = (params?: any, queryOptions?: any) => {
+      hooks[hookName] = (params?: any, queryOptions?: any) => {
         const queryKey = generateQueryKey(apiName, operationId, operation, params);
 
         return useQuery({
@@ -141,7 +153,7 @@ export function createHooks<const T extends Operations>(
         });
       };
     } else {
-      hooks[operationId] = (mutationOptions?: any) => {
+      hooks[hookName] = (mutationOptions?: any) => {
         return useMutation({
           mutationFn: async (variables: MutationParams<T, any>) => {
             if (!variables) {
