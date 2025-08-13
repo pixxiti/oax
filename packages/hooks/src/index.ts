@@ -138,7 +138,7 @@ export function createHooks<const T extends Operations>(
 
     const hookName = toCamelCaseHookName(operationId);
     const typedOperation = operation as Operation;
-    
+
     if (typedOperation.method === "get") {
       hooks[hookName] = (params?: any, queryOptions?: any) => {
         const queryKey = generateQueryKey(apiName, operationId, operation, params);

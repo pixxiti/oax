@@ -51,56 +51,54 @@ export const UpdatePetForm = ({
 
   return (
     <div className="update-pet">
-
-
-    <form onSubmit={handleSubmit}>
-      <div>
-        <label htmlFor="name">Pet Name:</label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleInputChange}
-          required
-        />
-      </div>
-
-      <div>
-        <label htmlFor="status">Status:</label>
-        <select id="status" name="status" value={formData.status} onChange={handleInputChange}>
-          <option value="available">Available</option>
-          <option value="pending">Pending</option>
-          <option value="sold">Sold</option>
-        </select>
-      </div>
-
-      <div>
-        <label htmlFor="photoUrls">Photo URL:</label>
-        <input
-          type="url"
-          id="photoUrls"
-          name="photoUrls"
-          value={formData.photoUrls[0]}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              photoUrls: [e.target.value],
-            }))
-          }
-        />
-      </div>
-
-      <button type="submit" disabled={isPending}>
-        {isPending ? "Updating..." : "Update Pet"}
-      </button>
-
-      {isError && (
-        <div style={{ color: "red", marginTop: "10px" }}>
-          Error: {error?.message || "Failed to update pet"}
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="name">Pet Name:</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+            required
+          />
         </div>
-      )}
-    </form>
+
+        <div>
+          <label htmlFor="status">Status:</label>
+          <select id="status" name="status" value={formData.status} onChange={handleInputChange}>
+            <option value="available">Available</option>
+            <option value="pending">Pending</option>
+            <option value="sold">Sold</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="photoUrls">Photo URL:</label>
+          <input
+            type="url"
+            id="photoUrls"
+            name="photoUrls"
+            value={formData.photoUrls[0]}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                photoUrls: [e.target.value],
+              }))
+            }
+          />
+        </div>
+
+        <button type="submit" disabled={isPending}>
+          {isPending ? "Updating..." : "Update Pet"}
+        </button>
+
+        {isError && (
+          <div style={{ color: "red", marginTop: "10px" }}>
+            Error: {error?.message || "Failed to update pet"}
+          </div>
+        )}
+      </form>
     </div>
   );
 };
