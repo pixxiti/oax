@@ -364,9 +364,9 @@ function generateStringSchema(schema: any): string {
     zodSchema += `.max(${schema.maxLength})`;
   }
   if (schema.pattern) {
-    // Escape the regex pattern for JavaScript string
-    const escapedPattern = schema.pattern.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-    zodSchema += `.regex(new RegExp("${escapedPattern}"))`;
+    // Escape the regex pattern for JavaScript regex literal
+    const escapedPattern = schema.pattern.replace(/\\/g, "\\\\").replace(/\//g, "\\/");
+    zodSchema += `.regex(/${escapedPattern}/)`;
   }
 
   return zodSchema;
