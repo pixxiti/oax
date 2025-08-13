@@ -10,6 +10,17 @@ import {
 
 // Mock ky for integration testing
 vi.mock("ky", () => {
+  // Create a mock HTTPError class
+  class MockHTTPError extends Error {
+    constructor(
+      public response: Response,
+      public request: Request,
+      public options: any
+    ) {
+      super("HTTP Error");
+    }
+  }
+
   let currentHooks: any = null;
 
   const mockKy = vi.fn().mockImplementation(async () => {
@@ -60,6 +71,7 @@ vi.mock("ky", () => {
 
   return {
     default: mockKy,
+    HTTPError: MockHTTPError,
   };
 });
 

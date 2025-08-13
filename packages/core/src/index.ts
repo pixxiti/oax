@@ -1,12 +1,29 @@
-import ky, { type Hooks } from "ky";
+import ky, {
+  type Hooks,
+  type Options,
+  type NormalizedOptions,
+  type BeforeErrorHook,
+  HTTPError,
+} from "ky";
 import type { ZodError, ZodType } from "zod";
 
-export interface ClientOptions {
+// Ky types
+export type { Hooks, Options };
+
+export class HTTPPayloadError extends HTTPError {
+  payload: any;
+  constructor(response: Response, request: Request, options: NormalizedOptions, payload: any) {
+    super(response, request, options);
+    this.payload = payload;
+  }
+}
+
+export { HTTPError };
+
+export interface ClientOptions extends Options {
   baseUrl: string;
-  headers?: Record<string, string>;
   validate?: boolean;
-  hooks?: Hooks;
-  validationHelpers?: ValidationHelpers;
+  disableErrorParsing?: boolean;
 }
 
 export interface OperationParameter {
@@ -413,38 +430,60 @@ export class ApiClient {
   private validationHelpers?: ValidationHelpers;
 
   constructor(baseUrl: string, operations: Operations, options?: Omit<ClientOptions, "baseUrl">) {
+    const { validate, disableErrorParsing, ...kyOptions } = options ?? {};
     this.operations = operations;
 
-    const shouldValidate = options?.validate !== false;
+    const shouldValidate = validate !== false;
+
+    const beforeError: BeforeErrorHook = async (error) => {
+      const { response, request, options } = error;
+      try {
+        const newError = new HTTPPayloadError(response, request, options, await response.json());
+        return newError;
+      } catch (e) {
+        return error;
+      }
+    };
 
     if (!shouldValidate) {
       this.ky = ky.create({
         prefixUrl: baseUrl,
-        ...options,
+        ...kyOptions,
+        hooks: {
+          ...kyOptions.hooks,
+          beforeError: [
+            ...(disableErrorParsing ? [beforeError] : []),
+            ...(kyOptions.hooks?.beforeError ?? []),
+          ],
+        },
       });
       return;
     }
 
-    this.validationHelpers = options?.validationHelpers ?? createValidationHelpers();
+    this.validationHelpers = createValidationHelpers();
     const hooks = createKyValidationHooks(this.validationHelpers);
 
     this.ky = ky.create({
       prefixUrl: baseUrl,
-      ...(options?.headers && { headers: options.headers }),
+      ...kyOptions,
       hooks: {
+        beforeError: [
+          ...(disableErrorParsing ? [beforeError] : []),
+          ...(kyOptions.hooks?.beforeError ?? []),
+        ],
         beforeRequest: [
           (request, options) => {
             const operation = (options as any).operation as Operation;
             return hooks.beforeRequest?.(request, options, operation) ?? request;
           },
-          ...(options?.hooks?.beforeRequest ?? []),
+          ...(kyOptions?.hooks?.beforeRequest ?? []),
         ],
         afterResponse: [
           (request, options, response) => {
             const operation = (options as any).operation as Operation;
             return hooks.afterResponse?.(request, options, response, operation) ?? response;
           },
-          ...(options?.hooks?.afterResponse ?? []),
+          ...(kyOptions?.hooks?.afterResponse ?? []),
         ],
       },
     });
@@ -497,7 +536,7 @@ export class ApiClient {
       }
     }
 
-    const requestOptions: any = {
+    const requestOptions: Record<string, any> = {
       method: operation.method.toUpperCase(),
       headers,
       searchParams,

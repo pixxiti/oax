@@ -3,7 +3,18 @@ import { z } from "zod";
 import { ApiClient, type Operations, createClient } from "../src/index";
 
 // Mock ky for testing
-vi.mock("ky", () => {
+vi.mock("ky", async () => {
+  // Create a mock HTTPError class
+  class MockHTTPError extends Error {
+    constructor(
+      public response: Response,
+      public request: Request,
+      public options: any
+    ) {
+      super("HTTP Error");
+    }
+  }
+
   const mockResponse = {
     json: vi.fn(),
     text: vi.fn(),
@@ -19,6 +30,7 @@ vi.mock("ky", () => {
 
   return {
     default: mockKy,
+    HTTPError: MockHTTPError,
   };
 });
 
@@ -129,6 +141,7 @@ describe("ApiClient", () => {
         hooks: {
           beforeRequest: expect.any(Array),
           afterResponse: expect.any(Array),
+          beforeError: expect.any(Array),
         },
       });
     });

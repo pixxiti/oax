@@ -34,8 +34,10 @@ describe("zoddy generator", () => {
     it("should generate client code with correct imports", () => {
       expect(clientCode).toContain('import { z } from "zod"');
       expect(clientCode).toContain(
-        'import { createClient as createRuntimeClient } from "@zoddy/core"'
+        'createClient as createRuntimeClient'
       );
+      expect(clientCode).toContain('type ClientOptions')
+      expect(clientCode).toContain('@zoddy/core')
     });
 
     it("should generate schema exports", () => {

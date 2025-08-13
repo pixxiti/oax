@@ -25,9 +25,6 @@ export const UpdatePetForm = ({
       console.log("Invalidating getPetById", hooks.getKey("getPetById", { params }));
       queryClient.invalidateQueries({ queryKey: hooks.getKey("getPetById", { params }) });
     },
-    onError: (error) => {
-      console.error("Error updating pet:", error);
-    },
   });
 
   const handleSubmit = (e: React.FormEvent) => {

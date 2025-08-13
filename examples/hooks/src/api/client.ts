@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createClient as createRuntimeClient } from "@zoddy/core";
+import { createClient as createRuntimeClient, type ClientOptions } from "@zoddy/core";
 
 export const Order = z.object({
   id: z.number().int().optional(),
@@ -834,6 +834,6 @@ export const operations = {
 
 export type Operations = typeof operations;
 
-export function createClient(baseUrl: string, options?: { headers?: Record<string, string> }) {
+export function createClient(baseUrl: string, options?: ClientOptions) {
   return createRuntimeClient(baseUrl, operations, options);
 }
