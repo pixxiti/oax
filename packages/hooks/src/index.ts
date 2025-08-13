@@ -20,6 +20,17 @@ export interface HooksOptions {
   client: any;
 }
 
+export interface HooksOptionsWithOperations<T extends Operations> {
+  apiName: string;
+  client: any;
+  operations: T;
+}
+
+export interface HooksOptionsInferred {
+  apiName: string;
+  client: { operations: Operations } & any;
+}
+
 // New structured parameter format: { params, queries, headers }
 type QueryParams<T extends Operations, K extends keyof T> = {
   params?: ParamsById<T, K> extends never ? undefined : ParamsById<T, K>;
@@ -127,10 +138,23 @@ function toCamelCaseHookName(operationId: string): string {
   return `use${operationId.charAt(0).toUpperCase()}${operationId.slice(1)}`;
 }
 
+// Overloaded function signatures
 export function createHooks<const T extends Operations>(
-  options: HooksOptions & { operations: T }
+  options: HooksOptionsWithOperations<T>
+): TypedHooks<T> & { getKey: GetKeyFunction<T> };
+export function createHooks<const T extends Operations>(
+  options: HooksOptionsInferred & { client: { operations: T } }
+): TypedHooks<T> & { getKey: GetKeyFunction<T> };
+export function createHooks<const T extends Operations>(
+  options: (HooksOptionsWithOperations<T> | HooksOptionsInferred) & { client: { operations?: T } }
 ): TypedHooks<T> & { getKey: GetKeyFunction<T> } {
-  const { apiName, client, operations } = options;
+  const { apiName, client } = options;
+  const operations = "operations" in options ? options.operations : client.operations;
+
+  if (!operations) {
+    throw new Error("Operations must be provided either explicitly or via client.operations");
+  }
+
   const hooks: any = {};
 
   for (const [operationId, operation] of Object.entries(operations)) {
@@ -141,7 +165,7 @@ export function createHooks<const T extends Operations>(
 
     if (typedOperation.method === "get") {
       hooks[hookName] = (params?: any, queryOptions?: any) => {
-        const queryKey = generateQueryKey(apiName, operationId, operation, params);
+        const queryKey = generateQueryKey(apiName, operationId, typedOperation, params);
 
         return useQuery({
           queryKey,

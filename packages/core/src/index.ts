@@ -404,11 +404,12 @@ type TypedClient<T extends Operations> = {
     inputs?: { params?: any; queries?: any; headers?: any },
     body?: any
   ) => Promise<any>;
+  operations: T;
 };
 
 export class ApiClient {
   public readonly ky: typeof ky;
-  private operations: Operations;
+  public readonly operations: Operations;
   private validationHelpers?: ValidationHelpers;
 
   constructor(baseUrl: string, operations: Operations, options?: Omit<ClientOptions, "baseUrl">) {
@@ -533,9 +534,9 @@ export function createClient<T extends Operations>(
   operations: T,
   options?: Omit<ClientOptions, "baseUrl">
 ): TypedClient<T> {
-  if (operations.ky || operations.request) {
+  if (operations.ky || operations.request || operations.operations) {
     throw new Error(
-      "`ky` and `request` are reserved properties and cannot be used as operation IDs"
+      "`ky`, `request`, `operations` are reserved properties and cannot be used as operation IDs"
     );
   }
 
