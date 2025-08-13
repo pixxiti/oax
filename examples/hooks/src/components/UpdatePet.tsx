@@ -50,6 +50,9 @@ export const UpdatePetForm = ({
   };
 
   return (
+    <div className="update-pet">
+
+
     <form onSubmit={handleSubmit}>
       <div>
         <label htmlFor="name">Pet Name:</label>
@@ -98,6 +101,7 @@ export const UpdatePetForm = ({
         </div>
       )}
     </form>
+    </div>
   );
 };
 

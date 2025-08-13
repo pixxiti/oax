@@ -13,6 +13,7 @@ export const PetDetail = ({
     data: pet,
     isPending,
     isRefetching,
+    refetch,
     error,
   } = hooks.useGetPetById({
     params,
@@ -76,6 +77,9 @@ export const PetDetail = ({
             </div>
           )}
         </div>
+        <button type="button" onClick={() => refetch()}>
+          Refetch
+        </button>
       </div>
     )
   );
