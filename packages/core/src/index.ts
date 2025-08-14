@@ -422,10 +422,11 @@ type TypedClient<T extends Operations> = {
     body?: any
   ) => Promise<any>;
   operations: T;
+  extend: (options: Options | ((parentOptions: Options) => Options)) => void;
 };
 
 export class ApiClient {
-  public readonly ky: typeof ky;
+  public ky: typeof ky;
   public readonly operations: Operations;
   private validationHelpers?: ValidationHelpers;
 
@@ -563,6 +564,10 @@ export class ApiClient {
     return response.text();
   }
 
+  extend(options: Options | ((parentOptions: Options) => Options)) {
+    this.ky = ky.extend(options);
+  }
+
   // Dynamic method creation - operations will be bound at runtime
   [key: string]: any;
 }
@@ -573,9 +578,9 @@ export function createClient<T extends Operations>(
   operations: T,
   options?: Omit<ClientOptions, "baseUrl">
 ): TypedClient<T> {
-  if (operations.ky || operations.request || operations.operations) {
+  if (operations.ky || operations.request || operations.operations || operations.extend) {
     throw new Error(
-      "`ky`, `request`, `operations` are reserved properties and cannot be used as operation IDs"
+      "`ky`, `request`, `operations`, `extend` are reserved properties and cannot be used as operation IDs"
     );
   }
 

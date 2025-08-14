@@ -33,7 +33,6 @@ export const PetDetail = ({
     if (error instanceof HTTPPayloadError) {
       return <div>Error: {JSON.stringify(error.payload)}</div>;
     }
-    console.error(error);
     return <div>Error: {error.message}</div>;
   }
 

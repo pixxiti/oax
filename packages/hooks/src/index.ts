@@ -164,14 +164,14 @@ export function createHooks<const T extends Operations>(
     const typedOperation = operation as Operation;
 
     if (typedOperation.method === "get") {
-      hooks[hookName] = (params?: any, queryOptions?: any) => {
-        const queryKey = generateQueryKey(apiName, operationId, typedOperation, params);
+      hooks[hookName] = (inputs?: any, queryOptions?: any) => {
+        const queryKey = generateQueryKey(apiName, operationId, typedOperation, inputs);
 
         return useQuery({
           queryKey,
           queryFn: async () => {
             // Use the new structured parameter format directly
-            return client[operationId](params);
+            return client[operationId](inputs);
           },
           ...queryOptions,
         });
@@ -184,7 +184,7 @@ export function createHooks<const T extends Operations>(
               return client[operationId]();
             }
 
-            const hasParams =
+            const hasInputs =
               typedOperation.params || typedOperation.queries || typedOperation.headers;
             const hasBody = typedOperation.requestBody;
 
@@ -211,10 +211,10 @@ export function createHooks<const T extends Operations>(
               const body = Object.keys(bodyData).length > 0 ? bodyData : undefined;
 
               // Call with structured format
-              if (hasParams && hasBody) {
+              if (hasInputs && hasBody) {
                 return client[operationId](inputs, body);
               }
-              if (hasParams) {
+              if (hasInputs) {
                 return client[operationId](inputs);
               }
               if (hasBody) {
