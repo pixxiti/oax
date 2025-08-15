@@ -1,4 +1,4 @@
-import { HTTPPayloadError, type ParamsById, type QueriesById } from "@zoddy/core";
+import type { ParamsById, QueriesById } from "@zoddy/core";
 import type { operations } from "../api/client";
 import { hooks } from "../api/hooks";
 
@@ -30,9 +30,6 @@ export const PetDetail = ({
   }
 
   if (error) {
-    if (error instanceof HTTPPayloadError) {
-      return <div>Error: {JSON.stringify(error.payload)}</div>;
-    }
     return <div>Error: {error.message}</div>;
   }
 

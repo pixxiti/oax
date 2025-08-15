@@ -7,12 +7,14 @@ import {
 } from "@tanstack/react-query";
 import type {
   BodyById,
+  ErrorsById,
   HeadersById,
   Operation,
   Operations,
   ParamsById,
   QueriesById,
   ResponseById,
+  ValidationError,
 } from "@zoddy/core";
 
 export interface HooksOptions {
@@ -51,26 +53,48 @@ type MutationParams<T extends Operations, K extends keyof T> = BodyById<T, K> ex
     : QueryParams<T, K> & BodyById<T, K>;
 
 // Define separate interfaces for query and mutation hooks
-interface QueryHookInterface<TData, TParams> {
-  (params?: TParams): ReturnType<typeof useQuery<TData>>;
+interface QueryHookInterface<
+  TData,
+  TParams,
+  TOperations extends Operations,
+  TOperationId extends keyof TOperations,
+> {
+  (params?: TParams): ReturnType<typeof useQuery<TData, ErrorsById<TOperations, TOperationId>>>;
   (
     params: TParams,
-    queryOptions: Omit<UseQueryOptions<TData>, "queryKey" | "queryFn">
-  ): ReturnType<typeof useQuery<TData>>;
+    queryOptions: Omit<
+      UseQueryOptions<TData, ErrorsById<TOperations, TOperationId>>,
+      "queryKey" | "queryFn"
+    >
+  ): ReturnType<typeof useQuery<TData, ErrorsById<TOperations, TOperationId>>>;
   (
-    queryOptions: Omit<UseQueryOptions<TData>, "queryKey" | "queryFn">
-  ): ReturnType<typeof useQuery<TData>>;
+    queryOptions: Omit<
+      UseQueryOptions<TData, ErrorsById<TOperations, TOperationId>>,
+      "queryKey" | "queryFn"
+    >
+  ): ReturnType<typeof useQuery<TData, ErrorsById<TOperations, TOperationId>>>;
   (
     params?: TParams,
-    queryOptions?: Omit<UseQueryOptions<TData>, "queryKey" | "queryFn">
-  ): ReturnType<typeof useQuery<TData>>;
+    queryOptions?: Omit<
+      UseQueryOptions<TData, ErrorsById<TOperations, TOperationId>>,
+      "queryKey" | "queryFn"
+    >
+  ): ReturnType<typeof useQuery<TData, ErrorsById<TOperations, TOperationId>>>;
 }
 
-interface MutationHookInterface<TData, TVariables> {
-  (): ReturnType<typeof useMutation<TData, Error, TVariables>>;
+interface MutationHookInterface<
+  TData,
+  TVariables,
+  TOperations extends Operations,
+  TOperationId extends keyof TOperations,
+> {
+  (): ReturnType<typeof useMutation<TData, ErrorsById<TOperations, TOperationId>, TVariables>>;
   (
-    mutationOptions: Omit<UseMutationOptions<TData, Error, TVariables>, "mutationFn">
-  ): ReturnType<typeof useMutation<TData, Error, TVariables>>;
+    mutationOptions: Omit<
+      UseMutationOptions<TData, ErrorsById<TOperations, TOperationId>, TVariables>,
+      "mutationFn"
+    >
+  ): ReturnType<typeof useMutation<TData, ErrorsById<TOperations, TOperationId>, TVariables>>;
 }
 
 // Helper type to detect GET operations more reliably
@@ -92,8 +116,8 @@ type ToCamelCaseHookName<T extends string> = T extends `${infer First}${infer Re
 // Type for hooks with camelCase naming
 export type TypedHooks<T extends Operations> = {
   [K in keyof T as ToCamelCaseHookName<string & K>]: IsGetMethod<T[K]> extends true
-    ? QueryHookInterface<ResponseById<T, K>, QueryParams<T, K>>
-    : MutationHookInterface<ResponseById<T, K>, MutationParams<T, K>>;
+    ? QueryHookInterface<ResponseById<T, K>, QueryParams<T, K>, T, K>
+    : MutationHookInterface<ResponseById<T, K>, MutationParams<T, K>, T, K>;
 };
 
 function normalizePathWithParams(path: string): string {

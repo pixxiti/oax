@@ -1,24 +1,11 @@
 import ky, {
   type Hooks,
   type Options,
-  type NormalizedOptions,
   type BeforeErrorHook,
-  HTTPError,
+  type HTTPError,
+  type NormalizedOptions,
 } from "ky";
 import type { ZodError, ZodType } from "zod";
-
-// Ky types
-export type { Hooks, Options };
-
-export class HTTPPayloadError extends HTTPError {
-  payload: any;
-  constructor(response: Response, request: Request, options: NormalizedOptions, payload: any) {
-    super(response, request, options);
-    this.payload = payload;
-  }
-}
-
-export { HTTPError };
 
 export interface ClientOptions extends Options {
   baseUrl: string;
@@ -364,7 +351,8 @@ export type ResponseById<T extends Operations, K extends keyof T> = T[K] extends
   ? InferOperationResponse<T[K]>
   : never;
 
-export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+// Server-side errors from API responses (non-2xx status codes)
+export type ServerErrorsById<T extends Operations, K extends keyof T> = T[K] extends Operation
   ? T[K]["responses"] extends Record<string, any>
     ? {
         [StatusCode in keyof T[K]["responses"]]: StatusCode extends `2${string}`
@@ -402,6 +390,20 @@ export type HeadersById<T extends Operations, K extends keyof T> = T[K] extends 
     : any
   : never;
 
+// Templatized error types that are operation-specific
+export type ValidationErrorById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? ValidationError
+  : never;
+
+export type HTTPErrorById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? HTTPError<ServerErrorsById<T, K> | unknown>
+  : never;
+
+// Client-side errors that can occur for any operation
+export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends Operation
+  ? ValidationErrorById<T, K> | HTTPErrorById<T, K> | Error
+  : never;
+
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
@@ -436,26 +438,12 @@ export class ApiClient {
 
     const shouldValidate = validate !== false;
 
-    const beforeError: BeforeErrorHook = async (error) => {
-      const { response, request, options } = error;
-      try {
-        const newError = new HTTPPayloadError(response, request, options, await response.json());
-        return newError;
-      } catch (e) {
-        return error;
-      }
-    };
-
     if (!shouldValidate) {
       this.ky = ky.create({
         prefixUrl: baseUrl,
         ...kyOptions,
         hooks: {
           ...kyOptions.hooks,
-          beforeError: [
-            ...(disableErrorParsing ? [beforeError] : []),
-            ...(kyOptions.hooks?.beforeError ?? []),
-          ],
         },
       });
       return;
@@ -468,10 +456,7 @@ export class ApiClient {
       prefixUrl: baseUrl,
       ...kyOptions,
       hooks: {
-        beforeError: [
-          ...(disableErrorParsing ? [beforeError] : []),
-          ...(kyOptions.hooks?.beforeError ?? []),
-        ],
+        ...kyOptions.hooks,
         beforeRequest: [
           (request, options) => {
             const operation = (options as any).operation as Operation;

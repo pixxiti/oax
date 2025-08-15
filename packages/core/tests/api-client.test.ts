@@ -141,7 +141,6 @@ describe("ApiClient", () => {
         hooks: {
           beforeRequest: expect.any(Array),
           afterResponse: expect.any(Array),
-          beforeError: expect.any(Array),
         },
       });
     });
