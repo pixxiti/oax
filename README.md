@@ -228,4 +228,4 @@ All existing code continues to work without changes. Validation is additive and 
 
 ## License
 
-ISC
+MIT
