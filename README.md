@@ -1,6 +1,6 @@
 # OAX
 
-**ky + oas + zod = typesafe api clients**
+**Open API Spec validation and client generation tooling for Typescript**
 
 OAX is a TypeScript-first API client generator that creates fully type-safe HTTP clients with runtime validation using Zod schemas. It combines the power of OpenAPI specifications, Zod validation, and the ky HTTP client for a seamless development experience.
 
