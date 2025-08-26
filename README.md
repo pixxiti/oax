@@ -1,8 +1,8 @@
-# OAX
+# oax
 
 **Open API Spec validation and client generation tooling for Typescript**
 
-OAX is a TypeScript-first API client generator that creates fully type-safe HTTP clients with runtime validation using Zod schemas. It combines the power of OpenAPI specifications, Zod validation, and the ky HTTP client for a seamless development experience.
+oax is a TypeScript-first API client generator that creates fully type-safe HTTP clients with runtime validation using Zod schemas. It combines the power of OpenAPI specifications, Zod validation, and the ky HTTP client for a seamless development experience.
 
 ## Features
 
@@ -18,7 +18,7 @@ OAX is a TypeScript-first API client generator that creates fully type-safe HTTP
 
 ### Packages
 
-OAX consists of three main packages:
+oax consists of three main packages:
 
 - **[@oax/core](./packages/core/)** - Core runtime library for API clients with validation
 - **[@oax/cli](./packages/cli/)** - Command-line tool for generating typed API clients from OpenAPI specs
@@ -175,7 +175,7 @@ Data received: {
 
 ## Examples
 
-OAX includes comprehensive examples to help you get started:
+oax includes comprehensive examples to help you get started:
 
 - **[Basic Example](./examples/basic/)** - Complete implementation using the Petstore API with TypeScript
 - **[Hooks Example](./examples/hooks/)** - React integration with TanStack Query v5 hooks

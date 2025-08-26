@@ -1,6 +1,6 @@
-# Custom Hooks with OAX
+# Custom Hooks with oax
 
-You can define custom hooks directly when creating an OAX client by passing them in the `hooks` option. Your hooks will be automatically combined with OAX's built-in validation hooks.
+You can define custom hooks directly when creating an oax client by passing them in the `hooks` option. Your hooks will be automatically combined with oax's built-in validation hooks.
 
 ## Basic Example
 
@@ -82,7 +82,7 @@ const client = createClient('https://api.example.com', operations, {
 
 ## Validation is Automatic
 
-When you define custom hooks, OAX's validation hooks are automatically included. Your hooks run alongside the built-in validation:
+When you define custom hooks, oax's validation hooks are automatically included. Your hooks run alongside the built-in validation:
 
 ```typescript
 const client = createClient('https://api.example.com', operations, {
@@ -141,4 +141,4 @@ const client = {
 };
 ```
 
-This approach gives you maximum flexibility while keeping the core OAX API simple and focused.
+This approach gives you maximum flexibility while keeping the core oax API simple and focused.

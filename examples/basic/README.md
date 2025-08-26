@@ -1,6 +1,6 @@
-# 🐾 OAX Petstore Example
+# 🐾 oax Petstore Example
 
-This example demonstrates how to use OAX to generate fully type-safe API clients from OpenAPI specifications. We'll be using the famous [Petstore API](https://petstore.swagger.io/) to showcase the power of automatic code generation and TypeScript type safety.
+This example demonstrates how to use oax to generate fully type-safe API clients from OpenAPI specifications. We'll be using the famous [Petstore API](https://petstore.swagger.io/) to showcase the power of automatic code generation and TypeScript type safety.
 
 ## What This Example Shows
 
@@ -194,7 +194,7 @@ Try modifying this example to:
 
 ## Learn More
 
-- [OAX Documentation](../../README.md)
+- [oax Documentation](../../README.md)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Petstore API Documentation](https://petstore.swagger.io/)

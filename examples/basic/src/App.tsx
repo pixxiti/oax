@@ -46,7 +46,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>🐾 OAX Petstore Demo</h1>
+      <h1>🐾 oax Petstore Demo</h1>
       <p>
         This demo showcases <strong>full type safety</strong> with OpenAPI-generated clients
       </p>

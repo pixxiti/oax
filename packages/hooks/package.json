@@ -1,7 +1,7 @@
 {
   "name": "@oax/hooks",
   "version": "1.0.0",
-  "description": "React Query v5 hooks for OAX API clients",
+  "description": "React Query v5 hooks for oax API clients",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -8,7 +8,7 @@ function App() {
 
   return (
     <div className="app">
-      <h1>🐾 OAX Hooks Demo</h1>
+      <h1>🐾 oax Hooks Demo</h1>
       <div className="controls">
         <label>
           Pet ID:

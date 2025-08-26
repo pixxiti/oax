@@ -1,6 +1,6 @@
-# 🐾 OAX Hooks Example
+# 🐾 oax Hooks Example
 
-This example demonstrates how to use **@oax/hooks** with React and TanStack Query v5 to create fully type-safe API clients with React hooks. Built on top of the Petstore API, it showcases how OAX seamlessly integrates with React applications for an exceptional developer experience.
+This example demonstrates how to use **@oax/hooks** with React and TanStack Query v5 to create fully type-safe API clients with React hooks. Built on top of the Petstore API, it showcases how oax seamlessly integrates with React applications for an exceptional developer experience.
 
 ## What This Example Shows
 
@@ -158,7 +158,7 @@ examples/hooks/
 
 ### Core Dependencies
 - **@oax/core**: Core runtime library for API clients
-- **@oax/hooks**: React Query hooks for OAX clients
+- **@oax/hooks**: React Query hooks for oax clients
 - **@tanstack/react-query**: TanStack Query v5 for data fetching
 - **react**: React 19+ for UI components
 - **zod**: Runtime validation schemas
@@ -282,7 +282,7 @@ Try extending this example to:
 ## Learn More
 
 - [TanStack Query Documentation](https://tanstack.com/query/latest)
-- [OAX Documentation](../../README.md)
+- [oax Documentation](../../README.md)
 - [React Documentation](https://react.dev/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 
