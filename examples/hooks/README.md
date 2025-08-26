@@ -1,6 +1,6 @@
-# 🐾 Zoddy Hooks Example
+# 🐾 OAX Hooks Example
 
-This example demonstrates how to use **@zoddy/hooks** with React and TanStack Query v5 to create fully type-safe API clients with React hooks. Built on top of the Petstore API, it showcases how Zoddy seamlessly integrates with React applications for an exceptional developer experience.
+This example demonstrates how to use **@oax/hooks** with React and TanStack Query v5 to create fully type-safe API clients with React hooks. Built on top of the Petstore API, it showcases how OAX seamlessly integrates with React applications for an exceptional developer experience.
 
 ## What This Example Shows
 
@@ -54,7 +54,7 @@ node ../../packages/cli/dist/index.js generate \
 React hooks are created using the generated client:
 
 ```typescript
-import { createHooks } from "@zoddy/hooks";
+import { createHooks } from "@oax/hooks";
 import { createClient, operations } from "./client";
 
 const client = createClient("https://petstore3.swagger.io/api/v3/");
@@ -157,8 +157,8 @@ examples/hooks/
 ## Dependencies
 
 ### Core Dependencies
-- **@zoddy/core**: Core runtime library for API clients
-- **@zoddy/hooks**: React Query hooks for Zoddy clients
+- **@oax/core**: Core runtime library for API clients
+- **@oax/hooks**: React Query hooks for OAX clients
 - **@tanstack/react-query**: TanStack Query v5 for data fetching
 - **react**: React 19+ for UI components
 - **zod**: Runtime validation schemas
@@ -282,7 +282,7 @@ Try extending this example to:
 ## Learn More
 
 - [TanStack Query Documentation](https://tanstack.com/query/latest)
-- [Zoddy Documentation](../../README.md)
+- [OAX Documentation](../../README.md)
 - [React Documentation](https://react.dev/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 

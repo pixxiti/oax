@@ -1,4 +1,4 @@
-import { createHooks } from "@zoddy/hooks";
+import { createHooks } from "@oax/hooks";
 
 import { createClient } from "./client";
 

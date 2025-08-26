@@ -15,7 +15,7 @@ import type {
   QueriesById,
   ResponseById,
   ValidationError,
-} from "@zoddy/core";
+} from "@oax/core";
 
 export interface HooksOptions {
   apiName: string;

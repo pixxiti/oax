@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createClient as createRuntimeClient, type ClientOptions } from "@zoddy/core";
+import { createClient as createRuntimeClient, type ClientOptions } from "@oax/core";
 
 export const Order = z.object({
   id: z.number().int().optional(),

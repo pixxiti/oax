@@ -1,11 +1,11 @@
 {
-  "name": "@zoddy/cli",
+  "name": "@oax/cli",
   "version": "1.0.0",
   "description": "CLI tool for generating typed API clients from OpenAPI specifications",
   "type": "module",
   "main": "./dist/index.js",
   "bin": {
-    "zoddy": "./dist/index.js"
+    "oax": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",

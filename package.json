@@ -1,5 +1,5 @@
 {
-  "name": "zoddy",
+  "name": "oax",
   "version": "1.0.0",
   "description": "ky + oas + zod = typesafe api clients",
   "private": true,

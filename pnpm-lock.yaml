@@ -23,7 +23,7 @@ importers:
 
   examples/basic:
     dependencies:
-      '@zoddy/core':
+      '@oax/core':
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -54,18 +54,18 @@ importers:
 
   examples/hooks:
     dependencies:
+      '@oax/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@oax/hooks':
+        specifier: workspace:*
+        version: link:../../packages/hooks
       '@tanstack/react-query':
         specifier: ^5.84.2
         version: 5.84.2(react@19.1.1)
       '@tanstack/react-query-devtools':
         specifier: ^5.85.0
         version: 5.85.0(@tanstack/react-query@5.84.2(react@19.1.1))(react@19.1.1)
-      '@zoddy/core':
-        specifier: workspace:*
-        version: link:../../packages/core
-      '@zoddy/hooks':
-        specifier: workspace:*
-        version: link:../../packages/hooks
       react:
         specifier: ^19.1.1
         version: 19.1.1
@@ -141,12 +141,12 @@ importers:
 
   packages/hooks:
     dependencies:
+      '@oax/core':
+        specifier: workspace:*
+        version: link:../core
       '@tanstack/react-query':
         specifier: ^5.0.0
         version: 5.84.2(react@18.3.1)
-      '@zoddy/core':
-        specifier: workspace:*
-        version: link:../core
       zod:
         specifier: ^4.0.17
         version: 4.0.17

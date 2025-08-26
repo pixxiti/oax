@@ -1,8 +1,8 @@
-# Zoddy
+# OAX
 
 **ky + oas + zod = typesafe api clients**
 
-Zoddy is a TypeScript-first API client generator that creates fully type-safe HTTP clients with runtime validation using Zod schemas. It combines the power of OpenAPI specifications, Zod validation, and the ky HTTP client for a seamless development experience.
+OAX is a TypeScript-first API client generator that creates fully type-safe HTTP clients with runtime validation using Zod schemas. It combines the power of OpenAPI specifications, Zod validation, and the ky HTTP client for a seamless development experience.
 
 ## Features
 
@@ -18,37 +18,37 @@ Zoddy is a TypeScript-first API client generator that creates fully type-safe HT
 
 ### Packages
 
-Zoddy consists of three main packages:
+OAX consists of three main packages:
 
-- **[@zoddy/core](./packages/core/)** - Core runtime library for API clients with validation
-- **[@zoddy/cli](./packages/cli/)** - Command-line tool for generating typed API clients from OpenAPI specs
-- **[@zoddy/hooks](./packages/hooks/)** - React Query v5 hooks for seamless React integration
+- **[@oax/core](./packages/core/)** - Core runtime library for API clients with validation
+- **[@oax/cli](./packages/cli/)** - Command-line tool for generating typed API clients from OpenAPI specs
+- **[@oax/hooks](./packages/hooks/)** - React Query v5 hooks for seamless React integration
 
 ## Installation
 
 ```bash
 # Core runtime library
-npm install @zoddy/core
+npm install @oax/core
 
 # CLI for code generation
-npm install -g @zoddy/cli
+npm install -g @oax/cli
 
 # React hooks (requires React 18+ and TanStack Query v5)
-npm install @zoddy/hooks @tanstack/react-query
+npm install @oax/hooks @tanstack/react-query
 ```
 
 ### Package Manager Alternatives
 
 ```bash
 # Using pnpm
-pnpm add @zoddy/core
-pnpm add -g @zoddy/cli
-pnpm add @zoddy/hooks @tanstack/react-query
+pnpm add @oax/core
+pnpm add -g @oax/cli
+pnpm add @oax/hooks @tanstack/react-query
 
 # Using yarn
-yarn add @zoddy/core
-yarn global add @zoddy/cli
-yarn add @zoddy/hooks @tanstack/react-query
+yarn add @oax/core
+yarn global add @oax/cli
+yarn add @oax/hooks @tanstack/react-query
 ```
 
 ### Basic Usage
@@ -101,7 +101,7 @@ import {
   createValidationHelpers, 
   createKyValidationHooks, 
   ValidationError 
-} from '@zoddy/core';
+} from '@oax/core';
 import { createClient } from './generated-client';
 
 const helpers = createValidationHelpers();
@@ -175,7 +175,7 @@ Data received: {
 
 ## Examples
 
-Zoddy includes comprehensive examples to help you get started:
+OAX includes comprehensive examples to help you get started:
 
 - **[Basic Example](./examples/basic/)** - Complete implementation using the Petstore API with TypeScript
 - **[Hooks Example](./examples/hooks/)** - React integration with TanStack Query v5 hooks
@@ -212,11 +212,11 @@ pnpm dev
 ### Project Structure
 
 ```
-zoddy/
+oax/
 ├── packages/
-│   ├── core/           # Core runtime library (@zoddy/core)
-│   ├── cli/            # Code generation CLI (@zoddy/cli)
-│   └── hooks/          # React Query hooks (@zoddy/hooks)
+│   ├── core/           # Core runtime library (@oax/core)
+│   ├── cli/            # Code generation CLI (@oax/cli)
+│   └── hooks/          # React Query hooks (@oax/hooks)
 └── examples/
     ├── basic/          # Basic TypeScript example
     └── hooks/          # React hooks example

@@ -20,7 +20,7 @@ export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
   const schemaCode = generateSchemaCode(schemas);
   const operationsCode = generateOperationsCode(operations);
   const code = `import { z } from 'zod';
-import { createClient as createRuntimeClient, type ClientOptions } from '@zoddy/core';
+import { createClient as createRuntimeClient, type ClientOptions } from '@oax/core';
 
 ${schemaCode}
 

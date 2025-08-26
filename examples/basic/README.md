@@ -1,6 +1,6 @@
-# 🐾 Zoddy Petstore Example
+# 🐾 OAX Petstore Example
 
-This example demonstrates how to use Zoddy to generate fully type-safe API clients from OpenAPI specifications. We'll be using the famous [Petstore API](https://petstore.swagger.io/) to showcase the power of automatic code generation and TypeScript type safety.
+This example demonstrates how to use OAX to generate fully type-safe API clients from OpenAPI specifications. We'll be using the famous [Petstore API](https://petstore.swagger.io/) to showcase the power of automatic code generation and TypeScript type safety.
 
 ## What This Example Shows
 
@@ -56,7 +56,7 @@ This creates a fully typed client in `src/api/client.ts` with:
 ### 2. Client Usage
 
 ```typescript
-import { createClient } from "@zoddy/core";
+import { createClient } from "@oax/core";
 import { operations } from "./api/client";
 
 // Create typed client - TypeScript knows all available methods!
@@ -194,7 +194,7 @@ Try modifying this example to:
 
 ## Learn More
 
-- [Zoddy Documentation](../../README.md)
+- [OAX Documentation](../../README.md)
 - [OpenAPI Specification](https://swagger.io/specification/)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 - [Petstore API Documentation](https://petstore.swagger.io/)

@@ -3,7 +3,7 @@ import type { OpenAPIV3 } from "openapi-types";
 import { beforeAll, describe, expect, it } from "vitest";
 import { generateClient, parseOAS } from "../src/generator.js";
 
-describe("zoddy generator", () => {
+describe("oax generator", () => {
   const testFixturePath = path.resolve(__dirname, "fixtures/petstore.json");
 
   describe("parseOAS", () => {
@@ -35,7 +35,7 @@ describe("zoddy generator", () => {
       expect(clientCode).toContain('import { z } from "zod"');
       expect(clientCode).toContain("createClient as createRuntimeClient");
       expect(clientCode).toContain("type ClientOptions");
-      expect(clientCode).toContain("@zoddy/core");
+      expect(clientCode).toContain("@oax/core");
     });
 
     it("should generate schema exports", () => {

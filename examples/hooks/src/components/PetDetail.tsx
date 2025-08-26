@@ -1,4 +1,4 @@
-import type { ParamsById, QueriesById } from "@zoddy/core";
+import type { ParamsById, QueriesById } from "@oax/core";
 import type { operations } from "../api/client";
 import { hooks } from "../api/hooks";
 

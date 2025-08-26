@@ -7,7 +7,7 @@ import { generateClient, parseOAS } from "./generator.js";
 const program = new Command();
 
 program
-  .name("zoddy")
+  .name("oax")
   .description("A CLI tool to generate a typed API client from an OpenAPI Specification.")
   .version("1.0.0");
 

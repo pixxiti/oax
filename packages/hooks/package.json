@@ -1,7 +1,7 @@
 {
-  "name": "@zoddy/hooks",
+  "name": "@oax/hooks",
   "version": "1.0.0",
-  "description": "React Query v5 hooks for Zoddy API clients",
+  "description": "React Query v5 hooks for OAX API clients",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -24,7 +24,7 @@
   "license": "ISC",
   "dependencies": {
     "@tanstack/react-query": "^5.0.0",
-    "@zoddy/core": "workspace:*",
+    "@oax/core": "workspace:*",
     "zod": "^4.0.17"
   },
   "devDependencies": {

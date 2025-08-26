@@ -1,7 +1,7 @@
 {
-  "name": "@zoddy/core",
+  "name": "@oax/core",
   "version": "1.0.0",
-  "description": "Runtime API client wrapper for generated zoddy clients",
+  "description": "Runtime API client wrapper for generated oax clients",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
