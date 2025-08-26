@@ -12,13 +12,7 @@
     "lint:fix": "biome lint --write .",
     "format": "biome format --write ."
   },
-  "keywords": [
-    "openapi",
-    "zod",
-    "typescript",
-    "api-client",
-    "ky"
-  ],
+  "keywords": ["openapi", "zod", "typescript", "api-client", "ky"],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.10.0",

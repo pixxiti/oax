@@ -18,13 +18,7 @@
     "lint:fix": "biome lint --write src tests",
     "format": "biome format --write src tests"
   },
-  "keywords": [
-    "openapi",
-    "cli",
-    "codegen",
-    "typescript",
-    "zod"
-  ],
+  "keywords": ["openapi", "cli", "codegen", "typescript", "zod"],
   "author": "",
   "license": "ISC",
   "dependencies": {

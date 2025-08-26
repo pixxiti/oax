@@ -19,13 +19,7 @@
     "lint": "biome lint .",
     "format": "biome format --write ."
   },
-  "keywords": [
-    "react-query",
-    "hooks",
-    "openapi",
-    "zod",
-    "typescript"
-  ],
+  "keywords": ["react-query", "hooks", "openapi", "zod", "typescript"],
   "author": "",
   "license": "ISC",
   "dependencies": {
