@@ -1,5 +1,5 @@
 import type { OpenAPIV3 } from "openapi-types";
-import prettier from "prettier";
+import { format as prettierFormat } from "prettier";
 import { type ZodType, z } from "zod";
 
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
@@ -31,7 +31,7 @@ export function createClient(baseUrl: string, options?: ClientOptions) {
 }
 `;
 
-  return prettier.format(code, { parser: "typescript" });
+  return prettierFormat(code, { parser: "typescript" });
 }
 
 interface ZodSchemaInfo {
@@ -40,18 +40,10 @@ interface ZodSchemaInfo {
   zodCode: string;
 }
 
-function generateSchemaCode(schemas: ZodSchemaInfo[]): string {
-  const schemaExports = schemas
+export function generateSchemaCode(schemas: ZodSchemaInfo[]): string {
+  return schemas
     .map(({ name, zodCode }) => `export const ${name} = ${zodCode};`)
     .join("\n\n");
-
-  const schemasObject = schemas.map(({ name }) => `  ${name}`).join(",\n");
-
-  return `${schemaExports}
-
-export const schemas = {
-${schemasObject}
-};`;
 }
 
 interface OperationInfo {
@@ -83,7 +75,7 @@ interface SchemaReference {
   required: boolean;
 }
 
-function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
+export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
   const operations: OperationInfo[] = [];
 
   if (!oas.paths) return operations;
@@ -177,7 +169,7 @@ function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
   return operations;
 }
 
-function generateOperationsCode(operations: OperationInfo[]): string {
+export function generateOperationsCode(operations: OperationInfo[]): string {
   const operationObjects = operations
     .map((op) => {
       // Group parameters by type
@@ -237,7 +229,7 @@ function generateOperationsCode(operations: OperationInfo[]): string {
 export type Operations = typeof operations;`;
 }
 
-function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
+export function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
   const schemas: ZodSchemaInfo[] = [];
 
   if (!oas.components?.schemas) return schemas;

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import path from "path";
+import * as path from "path";
 import { Command } from "commander";
-import fs from "fs/promises";
-import { generateClient, parseOAS } from "./generator.js";
+import * as fs from "fs/promises";
+import { generateClient, parseOAS } from "./generator";
+import { Pipeline, loadPipelineConfig } from "./pipeline";
 
 const program = new Command();
 
@@ -33,6 +34,24 @@ program
       console.log(`✅ Successfully generated API client at ${outputPath}`);
     } catch (error) {
       console.error("❌ Failed to generate API client:", error);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("build")
+  .description("Run the pipeline defined in oax.config.ts")
+  .option("-c, --config <path>", "Path to the configuration file", "oax.config.ts")
+  .action(async (options) => {
+    console.log("🔧 Building with pipeline...");
+    console.log(`Config file: ${options.config}`);
+
+    try {
+      const config = await loadPipelineConfig(options.config);
+      const pipeline = new Pipeline(config);
+      await pipeline.run();
+    } catch (error) {
+      console.error("❌ Failed to run pipeline:", error);
       process.exit(1);
     }
   });
