@@ -1,7 +1,7 @@
 import * as path from "path";
 import type { OpenAPIV3 } from "openapi-types";
 import { beforeAll, describe, expect, it } from "vitest";
-import { generateClient, parseOAS } from "../src/generator";
+import { generateClient, generateOperations, parseOAS } from "../src/generator";
 
 describe("oax generator", () => {
   const testFixturePath = path.resolve(__dirname, "fixtures/petstore.json");
@@ -99,6 +99,205 @@ describe("oax generator", () => {
       expect(clientCode).toContain("queries:");
       expect(clientCode).toContain("headers:");
       expect(clientCode).toContain("responses:");
+    });
+
+    it("should resolve $ref parameters", async () => {
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items": {
+            get: {
+              operationId: "listItems",
+              parameters: [
+                { $ref: "#/components/parameters/cursor" } as any,
+                { $ref: "#/components/parameters/limit" } as any,
+              ],
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          },
+        },
+        components: {
+          parameters: {
+            cursor: {
+              name: "cursor",
+              in: "query",
+              required: false,
+              schema: { type: "string" },
+            },
+            limit: {
+              name: "limit",
+              in: "query",
+              required: false,
+              schema: { type: "integer" },
+            },
+          } as any,
+        },
+      };
+
+      const ops = generateOperations(testOAS);
+      expect(ops).toHaveLength(1);
+      const op = ops[0];
+      expect(op.parameters).toHaveLength(2);
+      expect(op.parameters[0].name).toBe("cursor");
+      expect(op.parameters[0].in).toBe("query");
+      expect(op.parameters[1].name).toBe("limit");
+      expect(op.parameters[1].in).toBe("query");
+    });
+
+    it("should resolve $ref responses", async () => {
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items": {
+            get: {
+              operationId: "listItems",
+              responses: {
+                "200": { $ref: "#/components/responses/ItemList" } as any,
+                "401": { $ref: "#/components/responses/Unauthorized" } as any,
+              },
+            },
+          },
+        },
+        components: {
+          responses: {
+            ItemList: {
+              description: "A list of items",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "array",
+                    items: { type: "string" },
+                  },
+                },
+              },
+            },
+            Unauthorized: {
+              description: "Not authenticated",
+            },
+          } as any,
+        },
+      };
+
+      const ops = generateOperations(testOAS);
+      expect(ops).toHaveLength(1);
+      const op = ops[0];
+      expect(op.responses).toHaveLength(2);
+
+      const resp200 = op.responses.find((r) => r.status === "200");
+      expect(resp200).toBeDefined();
+      expect(resp200!.description).toBe("A list of items");
+      expect(resp200!.schema).toBeDefined();
+      expect(resp200!.schema!.zodCode).toContain("z.array");
+
+      const resp401 = op.responses.find((r) => r.status === "401");
+      expect(resp401).toBeDefined();
+      expect(resp401!.description).toBe("Not authenticated");
+    });
+
+    it("should inherit path-level parameters and merge with operation parameters", async () => {
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items/{item_id}": {
+            // Path-level parameter — inherited by both GET and PATCH
+            parameters: [
+              {
+                name: "item_id",
+                in: "path",
+                required: true,
+                schema: { type: "string" },
+              },
+            ],
+            get: {
+              operationId: "getItem",
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+            patch: {
+              operationId: "updateItem",
+              // Operation-level parameter with same name overrides path-level
+              parameters: [
+                {
+                  name: "item_id",
+                  in: "path",
+                  required: true,
+                  schema: { type: "string" },
+                  description: "overridden",
+                },
+                {
+                  name: "dry_run",
+                  in: "query",
+                  required: false,
+                  schema: { type: "boolean" },
+                },
+              ],
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          } as any,
+        },
+      };
+
+      const ops = generateOperations(testOAS);
+      expect(ops).toHaveLength(2);
+
+      // GET should inherit path-level item_id
+      const getOp = ops.find((o) => o.operationId === "getItem")!;
+      expect(getOp.parameters).toHaveLength(1);
+      expect(getOp.parameters[0].name).toBe("item_id");
+      expect(getOp.parameters[0].in).toBe("path");
+
+      // PATCH should have both item_id (from operation, overriding path-level) and dry_run
+      const patchOp = ops.find((o) => o.operationId === "updateItem")!;
+      expect(patchOp.parameters).toHaveLength(2);
+      const paramNames = patchOp.parameters.map((p) => p.name).sort();
+      expect(paramNames).toEqual(["dry_run", "item_id"]);
+      // Should NOT have duplicated item_id
+      expect(patchOp.parameters.filter((p) => p.name === "item_id")).toHaveLength(1);
+    });
+
+    it("should resolve $ref path-level parameters", async () => {
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items/{item_id}": {
+            parameters: [
+              { $ref: "#/components/parameters/item_id" } as any,
+            ],
+            get: {
+              operationId: "getItem",
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          } as any,
+        },
+        components: {
+          parameters: {
+            item_id: {
+              name: "item_id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+            },
+          } as any,
+        },
+      };
+
+      const ops = generateOperations(testOAS);
+      expect(ops).toHaveLength(1);
+      expect(ops[0].parameters).toHaveLength(1);
+      expect(ops[0].parameters[0].name).toBe("item_id");
+      expect(ops[0].parameters[0].in).toBe("path");
+      expect(ops[0].parameters[0].required).toBe(true);
     });
 
     it("should generate correct z.record syntax for additionalProperties", async () => {
