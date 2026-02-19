@@ -110,6 +110,47 @@ interface SchemaReference {
   required: boolean;
 }
 
+/**
+ * Resolve a $ref pointer against the OAS document.
+ * Supports JSON Pointer paths like "#/components/parameters/foo".
+ */
+function resolveRef(oas: OpenAPIV3.Document, ref: string): any {
+  if (!ref.startsWith("#/")) return undefined;
+  const parts = ref.slice(2).split("/");
+  let current: any = oas;
+  for (const part of parts) {
+    if (current === undefined || current === null) return undefined;
+    current = current[part];
+  }
+  return current;
+}
+
+/**
+ * Resolve a parameter that may be a $ref or an inline object.
+ */
+function resolveParameter(
+  oas: OpenAPIV3.Document,
+  param: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject,
+): OpenAPIV3.ParameterObject | undefined {
+  if ("$ref" in param) {
+    return resolveRef(oas, param.$ref) as OpenAPIV3.ParameterObject | undefined;
+  }
+  return param as OpenAPIV3.ParameterObject;
+}
+
+/**
+ * Resolve a response that may be a $ref or an inline object.
+ */
+function resolveResponse(
+  oas: OpenAPIV3.Document,
+  response: OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject,
+): OpenAPIV3.ResponseObject | undefined {
+  if ("$ref" in response) {
+    return resolveRef(oas, (response as OpenAPIV3.ReferenceObject).$ref) as OpenAPIV3.ResponseObject | undefined;
+  }
+  return response as OpenAPIV3.ResponseObject;
+}
+
 export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
   const operations: OperationInfo[] = [];
 
@@ -117,6 +158,15 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
 
   for (const [pathTemplate, pathItem] of Object.entries(oas.paths)) {
     if (!pathItem) continue;
+
+    // Collect path-level parameters (inherited by all operations under this path)
+    const pathLevelParams: OpenAPIV3.ParameterObject[] = [];
+    if ((pathItem as any).parameters) {
+      for (const p of (pathItem as any).parameters) {
+        const resolved = resolveParameter(oas, p);
+        if (resolved) pathLevelParams.push(resolved);
+      }
+    }
 
     const methods = ["get", "post", "put", "delete", "patch", "head", "options"] as const;
 
@@ -127,32 +177,39 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
       const operationId =
         operation.operationId || `${method}${pathTemplate.replace(/[^a-zA-Z0-9]/g, "")}`;
 
-      const parameters: ParameterInfo[] = [];
+      // Merge path-level + operation-level parameters.
+      // Operation-level params override path-level params with the same name+in.
+      const opParams: OpenAPIV3.ParameterObject[] = [];
       if (operation.parameters) {
         for (const param of operation.parameters) {
-          if ("$ref" in param) continue; // Skip refs for now
-
-          const paramObj = param as OpenAPIV3.ParameterObject;
-          parameters.push({
-            name: paramObj.name,
-            in: paramObj.in as ParameterInfo["in"],
-            required: paramObj.required || false,
-            schema: {
-              zodCode: generateZodCodeFromSchema(paramObj.schema),
-              required: paramObj.required || false,
-            },
-          });
+          const resolved = resolveParameter(oas, param);
+          if (resolved) opParams.push(resolved);
         }
       }
+
+      // Build a set of (name, in) from operation-level params for dedup
+      const opParamKeys = new Set(opParams.map((p) => `${p.name}:${p.in}`));
+      const mergedParams = [
+        ...pathLevelParams.filter((p) => !opParamKeys.has(`${p.name}:${p.in}`)),
+        ...opParams,
+      ];
+
+      const parameters: ParameterInfo[] = mergedParams.map((paramObj) => ({
+        name: paramObj.name,
+        in: paramObj.in as ParameterInfo["in"],
+        required: paramObj.required || false,
+        schema: {
+          zodCode: generateZodCodeFromSchema(paramObj.schema),
+          required: paramObj.required || false,
+        },
+      }));
 
       let requestBody: SchemaReference | undefined;
       if (operation.requestBody) {
         let resolvedBody: OpenAPIV3.RequestBodyObject | undefined;
         if ("$ref" in operation.requestBody) {
-          const refName = (operation.requestBody as OpenAPIV3.ReferenceObject).$ref.split("/").pop();
-          if (refName && (oas as any).components?.requestBodies?.[refName]) {
-            resolvedBody = (oas as any).components.requestBodies[refName] as OpenAPIV3.RequestBodyObject;
-          }
+          const resolved = resolveRef(oas, (operation.requestBody as OpenAPIV3.ReferenceObject).$ref);
+          if (resolved) resolvedBody = resolved as OpenAPIV3.RequestBodyObject;
         } else {
           resolvedBody = operation.requestBody;
         }
@@ -170,9 +227,11 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
       const responses: ResponseInfo[] = [];
       if (operation.responses) {
         for (const [status, response] of Object.entries(operation.responses)) {
-          if (!response || "$ref" in response) continue;
+          if (!response) continue;
 
-          const responseObj = response as OpenAPIV3.ResponseObject;
+          const responseObj = resolveResponse(oas, response);
+          if (!responseObj) continue;
+
           const content = responseObj.content?.["application/json"];
           const responseInfo: ResponseInfo = {
             status,
