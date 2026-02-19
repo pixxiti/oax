@@ -2,6 +2,10 @@ import type { OpenAPIV3 } from "openapi-types";
 import { format as prettierFormat } from "prettier";
 import { type ZodType, z } from "zod";
 
+function isIdentifier(code: string): boolean {
+  return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(code);
+}
+
 function sanitizeIdentifier(name: string): string {
   let sanitized = name.replace(/[^a-zA-Z0-9_$]/g, "_");
   if (/^[0-9]/.test(sanitized)) {
@@ -25,14 +29,23 @@ export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
   }
 }
 
-export function extractBodySchemas(operations: OperationInfo[]): ZodSchemaInfo[] {
+export function extractBodySchemas(
+  operations: OperationInfo[],
+  existingSchemaNames?: Set<string>,
+): ZodSchemaInfo[] {
   const bodySchemas: ZodSchemaInfo[] = [];
   for (const op of operations) {
     if (op.requestBody) {
+      const zodCode = op.requestBody.zodCode;
+      // If the body is already a reference to an existing named schema,
+      // skip creating a redundant _Body alias.
+      if (existingSchemaNames && isIdentifier(zodCode) && existingSchemaNames.has(zodCode)) {
+        continue;
+      }
       bodySchemas.push({
         name: sanitizeIdentifier(`${op.operationId}_Body`),
         schema: z.any(),
-        zodCode: op.requestBody.zodCode,
+        zodCode,
       });
     }
   }
@@ -42,10 +55,11 @@ export function extractBodySchemas(operations: OperationInfo[]): ZodSchemaInfo[]
 export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
   const schemas = generateZodSchemas(oas);
   const operations = generateOperations(oas);
-  const allSchemas = [...schemas, ...extractBodySchemas(operations)];
+  const schemaNames = new Set(schemas.map((s) => s.name));
+  const allSchemas = [...schemas, ...extractBodySchemas(operations, schemaNames)];
   const schemaCode = generateSchemaCode(allSchemas);
   const schemasObjectCode = generateSchemasObject(allSchemas);
-  const operationsCode = generateOperationsCode(operations);
+  const operationsCode = generateOperationsCode(operations, schemaNames);
   const code = `import { z } from 'zod';
 import { createClient as createRuntimeClient, type ClientOptions } from '@oax/core';
 
@@ -274,7 +288,10 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
   return operations;
 }
 
-export function generateOperationsCode(operations: OperationInfo[]): string {
+export function generateOperationsCode(
+  operations: OperationInfo[],
+  existingSchemaNames?: Set<string>,
+): string {
   const operationObjects = operations
     .map((op) => {
       // Group parameters by type
@@ -297,8 +314,18 @@ export function generateOperationsCode(operations: OperationInfo[]): string {
       const queryParamsCode = generateParamObject(queryParams);
       const headerParamsCode = generateParamObject(headerParams);
 
+      let bodySchemaRef = "";
+      if (op.requestBody) {
+        const zodCode = op.requestBody.zodCode;
+        // Use the original schema name if it's already a named schema ref;
+        // otherwise fall back to the generated _Body name.
+        bodySchemaRef =
+          existingSchemaNames && isIdentifier(zodCode) && existingSchemaNames.has(zodCode)
+            ? zodCode
+            : sanitizeIdentifier(`${op.operationId}_Body`);
+      }
       const requestBodyCode = op.requestBody
-        ? `requestBody: { schema: ${sanitizeIdentifier(`${op.operationId}_Body`)}, required: ${op.requestBody.required} },`
+        ? `requestBody: { schema: ${bodySchemaRef}, required: ${op.requestBody.required} },`
         : "";
 
       const responsesCode = op.responses

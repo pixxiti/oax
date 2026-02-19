@@ -36,9 +36,10 @@ export function zodGenerator(options: ZodGeneratorOptions = {}): Step {
       // Generate Zod schemas and operations using existing generator logic
       const schemas = generateZodSchemas(oasData);
       const operations = generateOperations(oasData);
-      const allSchemas = [...schemas, ...extractBodySchemas(operations)];
+      const schemaNames = new Set(schemas.map((s) => s.name));
+      const allSchemas = [...schemas, ...extractBodySchemas(operations, schemaNames)];
       const schemaCode = generateSchemaCode(allSchemas);
-      const operationsCode = generateOperationsCode(operations);
+      const operationsCode = generateOperationsCode(operations, schemaNames);
 
       const fullCode = `import { z } from 'zod';
 

@@ -78,9 +78,12 @@ describe("oax generator", () => {
       expect(clientCode).toContain("queries: z.object({ limit");
     });
 
-    it("should generate request body schemas", () => {
+    it("should reference existing schema directly in requestBody instead of creating _Body alias", () => {
       expect(clientCode).toContain("requestBody");
       expect(clientCode).toContain("required: true");
+      // createPet's body is $ref NewPet — should use NewPet directly, not createPet_Body
+      expect(clientCode).toContain("requestBody: { schema: NewPet");
+      expect(clientCode).not.toContain("createPet_Body");
     });
   });
 
@@ -298,6 +301,42 @@ describe("oax generator", () => {
       expect(ops[0].parameters[0].name).toBe("item_id");
       expect(ops[0].parameters[0].in).toBe("path");
       expect(ops[0].parameters[0].required).toBe(true);
+    });
+
+    it("should create _Body schema for inline request bodies", async () => {
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items": {
+            post: {
+              operationId: "createItem",
+              requestBody: {
+                required: true,
+                content: {
+                  "application/json": {
+                    schema: {
+                      type: "object",
+                      properties: {
+                        name: { type: "string" },
+                      },
+                      required: ["name"],
+                    },
+                  },
+                },
+              },
+              responses: {
+                "201": { description: "Created" },
+              },
+            },
+          },
+        },
+      };
+
+      const clientCode = await generateClient(testOAS);
+      // Inline body needs a _Body export since there's no named schema to reference
+      expect(clientCode).toContain("export const createItem_Body =");
+      expect(clientCode).toContain("requestBody: { schema: createItem_Body");
     });
 
     it("should generate correct z.record syntax for additionalProperties", async () => {
