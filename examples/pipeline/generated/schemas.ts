@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-02-19T19:37:46.266Z
+// Generated on: 2026-02-19T20:28:25.296Z
 
 import { z } from "zod";
 
@@ -15,8 +15,6 @@ export const NewPet = z.object({
   tag: z.string().optional(),
   status: z.enum(["available", "pending", "sold"]).optional(),
 });
-
-export const createPet_Body = NewPet;
 
 export const operations = {
   listPets: {
@@ -45,7 +43,7 @@ export const operations = {
     params: z.object({}),
     queries: z.object({}),
     headers: z.object({}),
-    requestBody: { schema: createPet_Body, required: true },
+    requestBody: { schema: NewPet, required: true },
     responses: {
       "201": {
         description: `Pet created`,
