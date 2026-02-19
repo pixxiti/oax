@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2025-09-03T16:32:03.365Z
+// Generated on: 2026-02-19T19:37:46.301Z
 
 import type { z } from "zod";
 import {

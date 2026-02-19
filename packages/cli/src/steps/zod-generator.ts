@@ -1,5 +1,5 @@
 import type { Step, StepContext, StepOutput } from "../pipeline";
-import { generateZodSchemas, generateSchemaCode, generateOperations, generateOperationsCode } from "../generator";
+import { generateZodSchemas, generateSchemaCode, generateSchemasObject, generateOperations, generateOperationsCode, extractBodySchemas } from "../generator";
 import { format as prettierFormat } from "prettier";
 
 export interface ZodGeneratorOptions {
@@ -36,7 +36,8 @@ export function zodGenerator(options: ZodGeneratorOptions = {}): Step {
       // Generate Zod schemas and operations using existing generator logic
       const schemas = generateZodSchemas(oasData);
       const operations = generateOperations(oasData);
-      const schemaCode = generateSchemaCode(schemas);
+      const allSchemas = [...schemas, ...extractBodySchemas(operations)];
+      const schemaCode = generateSchemaCode(allSchemas);
       const operationsCode = generateOperationsCode(operations);
 
       const fullCode = `import { z } from 'zod';
@@ -53,9 +54,9 @@ ${operationsCode}`;
         content: formattedCode,
         meta: {
           inputStep,
-          schemaCount: schemas.length,
+          schemaCount: allSchemas.length,
           operationCount: operations.length,
-          schemas: schemas.reduce((acc, schema) => {
+          schemas: allSchemas.reduce((acc, schema) => {
             acc[schema.name] = schema;
             return acc;
           }, {} as Record<string, any>),

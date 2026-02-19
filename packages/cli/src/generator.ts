@@ -2,10 +2,22 @@ import type { OpenAPIV3 } from "openapi-types";
 import { format as prettierFormat } from "prettier";
 import { type ZodType, z } from "zod";
 
+function sanitizeIdentifier(name: string): string {
+  let sanitized = name.replace(/[^a-zA-Z0-9_$]/g, "_");
+  if (/^[0-9]/.test(sanitized)) {
+    sanitized = `_${sanitized}`;
+  }
+  return sanitized;
+}
+
+function escapeStringLiteral(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+}
+
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
   try {
     const SwaggerParser = await import("@apidevtools/swagger-parser");
-    const api = (await SwaggerParser.default.validate(filePath)) as OpenAPIV3.Document;
+    const api = (await SwaggerParser.default.bundle(filePath)) as OpenAPIV3.Document;
     return api;
   } catch (error) {
     console.error("Error parsing OAS file:", error);
@@ -13,16 +25,33 @@ export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
   }
 }
 
+export function extractBodySchemas(operations: OperationInfo[]): ZodSchemaInfo[] {
+  const bodySchemas: ZodSchemaInfo[] = [];
+  for (const op of operations) {
+    if (op.requestBody) {
+      bodySchemas.push({
+        name: sanitizeIdentifier(`${op.operationId}_Body`),
+        schema: z.any(),
+        zodCode: op.requestBody.zodCode,
+      });
+    }
+  }
+  return bodySchemas;
+}
+
 export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
   const schemas = generateZodSchemas(oas);
   const operations = generateOperations(oas);
-
-  const schemaCode = generateSchemaCode(schemas);
+  const allSchemas = [...schemas, ...extractBodySchemas(operations)];
+  const schemaCode = generateSchemaCode(allSchemas);
+  const schemasObjectCode = generateSchemasObject(allSchemas);
   const operationsCode = generateOperationsCode(operations);
   const code = `import { z } from 'zod';
 import { createClient as createRuntimeClient, type ClientOptions } from '@oax/core';
 
 ${schemaCode}
+
+${schemasObjectCode}
 
 ${operationsCode}
 
@@ -44,6 +73,12 @@ export function generateSchemaCode(schemas: ZodSchemaInfo[]): string {
   return schemas
     .map(({ name, zodCode }) => `export const ${name} = ${zodCode};`)
     .join("\n\n");
+}
+
+export function generateSchemasObject(schemas: ZodSchemaInfo[]): string {
+  if (schemas.length === 0) return "";
+  const entries = schemas.map(({ name }) => `  ${name},`).join("\n");
+  return `export const schemas = {\n${entries}\n};`;
 }
 
 interface OperationInfo {
@@ -111,13 +146,24 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
       }
 
       let requestBody: SchemaReference | undefined;
-      if (operation.requestBody && !("$ref" in operation.requestBody)) {
-        const content = operation.requestBody.content?.["application/json"];
-        if (content?.schema) {
-          requestBody = {
-            zodCode: generateZodCodeFromSchema(content.schema),
-            required: operation.requestBody.required || false,
-          };
+      if (operation.requestBody) {
+        let resolvedBody: OpenAPIV3.RequestBodyObject | undefined;
+        if ("$ref" in operation.requestBody) {
+          const refName = (operation.requestBody as OpenAPIV3.ReferenceObject).$ref.split("/").pop();
+          if (refName && (oas as any).components?.requestBodies?.[refName]) {
+            resolvedBody = (oas as any).components.requestBodies[refName] as OpenAPIV3.RequestBodyObject;
+          }
+        } else {
+          resolvedBody = operation.requestBody;
+        }
+        if (resolvedBody) {
+          const content = resolvedBody.content?.["application/json"];
+          if (content?.schema) {
+            requestBody = {
+              zodCode: generateZodCodeFromSchema(content.schema),
+              required: resolvedBody.required || false,
+            };
+          }
         }
       }
 
@@ -193,14 +239,14 @@ export function generateOperationsCode(operations: OperationInfo[]): string {
       const headerParamsCode = generateParamObject(headerParams);
 
       const requestBodyCode = op.requestBody
-        ? `requestBody: { schema: ${op.requestBody.zodCode}, required: ${op.requestBody.required} },`
+        ? `requestBody: { schema: ${sanitizeIdentifier(`${op.operationId}_Body`)}, required: ${op.requestBody.required} },`
         : "";
 
       const responsesCode = op.responses
         .map(
           (r) => `
     '${r.status}': {
-      description: ${r.description ? `'${r.description}'` : "undefined"},
+      description: ${r.description ? `\`${escapeStringLiteral(r.description)}\`` : "undefined"},
       schema: ${r.schema ? r.schema.zodCode : "z.void()"}
     }`
         )
@@ -211,8 +257,8 @@ export function generateOperationsCode(operations: OperationInfo[]): string {
     method: '${op.method}',
     path: '${op.path}',
     operationId: '${op.operationId}',
-    summary: ${op.summary ? `'${op.summary}'` : "undefined"},
-    description: ${op.description ? `'${op.description}'` : "undefined"},
+    summary: ${op.summary ? `\`${escapeStringLiteral(op.summary)}\`` : "undefined"},
+    description: ${op.description ? `\`${escapeStringLiteral(op.description)}\`` : "undefined"},
     params: ${pathParamsCode},
     queries: ${queryParamsCode},
     headers: ${headerParamsCode},
@@ -240,7 +286,7 @@ export function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
     const zodCode = generateZodCodeFromSchema(schema as OpenAPIV3.SchemaObject);
 
     schemas.push({
-      name,
+      name: sanitizeIdentifier(name),
       schema: z.any(), // We'll use the code representation instead
       zodCode,
     });
@@ -255,7 +301,7 @@ function generateZodCodeFromSchema(schema: any): string {
   // Handle $ref
   if ("$ref" in schema) {
     const refName = schema.$ref.split("/").pop();
-    return refName || "z.any()";
+    return refName ? sanitizeIdentifier(refName) : "z.any()";
   }
 
   // Handle composition operators (allOf, anyOf, oneOf)

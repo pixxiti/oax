@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2025-09-03T16:32:03.359Z
+// Generated on: 2026-02-19T19:37:46.296Z
 
 import type ky from "ky";
 import type { BeforeRequestHook, AfterResponseHook } from "ky";
