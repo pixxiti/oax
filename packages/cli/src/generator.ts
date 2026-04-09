@@ -6,7 +6,7 @@ function isIdentifier(code: string): boolean {
   return /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(code);
 }
 
-function sanitizeIdentifier(name: string): string {
+export function sanitizeIdentifier(name: string): string {
   let sanitized = name.replace(/[^a-zA-Z0-9_$]/g, "_");
   if (/^[0-9]/.test(sanitized)) {
     sanitized = `_${sanitized}`;
@@ -338,6 +338,12 @@ export function generateOperationsCode(
         )
         .join(",");
 
+      // Find success response (first 2xx) for convenience `response` field
+      const successResponse = op.responses.find((r) => r.status.startsWith("2"));
+      const responseCode = successResponse?.schema
+        ? successResponse.schema.zodCode
+        : "z.void()";
+
       return `
   '${op.operationId}': {
     method: '${op.method}',
@@ -349,6 +355,7 @@ export function generateOperationsCode(
     queries: ${queryParamsCode},
     headers: ${headerParamsCode},
     ${requestBodyCode}
+    response: ${responseCode},
     responses: {${responsesCode}
     }
   }`;

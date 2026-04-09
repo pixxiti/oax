@@ -4,6 +4,11 @@
   "description": "CLI tool for generating typed API clients from OpenAPI specifications",
   "type": "module",
   "main": "./dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./lib": "./dist/lib.js",
+    "./exports": "./dist/exports.js"
+  },
   "bin": {
     "oax": "./dist/index.js"
   },
