@@ -24,6 +24,6 @@ export function createStandardPipeline(input: string) {
     validatorPipeline(),
     kyGenerator(),
     queryKeyGenerator(),
-    reactQueryGenerator()
+    reactQueryGenerator(),
   ];
 }

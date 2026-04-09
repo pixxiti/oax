@@ -64,10 +64,10 @@ export function oasParser(options: OASParserOptions = {}): Step {
       };
     },
   };
-  
+
   if (options.outputFile) {
     step.outputFile = options.outputFile;
   }
-  
+
   return step;
 }

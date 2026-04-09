@@ -31,7 +31,7 @@ export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
 
 export function extractBodySchemas(
   operations: OperationInfo[],
-  existingSchemaNames?: Set<string>,
+  existingSchemaNames?: Set<string>
 ): ZodSchemaInfo[] {
   const bodySchemas: ZodSchemaInfo[] = [];
   for (const op of operations) {
@@ -84,9 +84,7 @@ interface ZodSchemaInfo {
 }
 
 export function generateSchemaCode(schemas: ZodSchemaInfo[]): string {
-  return schemas
-    .map(({ name, zodCode }) => `export const ${name} = ${zodCode};`)
-    .join("\n\n");
+  return schemas.map(({ name, zodCode }) => `export const ${name} = ${zodCode};`).join("\n\n");
 }
 
 export function generateSchemasObject(schemas: ZodSchemaInfo[]): string {
@@ -144,7 +142,7 @@ function resolveRef(oas: OpenAPIV3.Document, ref: string): any {
  */
 function resolveParameter(
   oas: OpenAPIV3.Document,
-  param: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject,
+  param: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject
 ): OpenAPIV3.ParameterObject | undefined {
   if ("$ref" in param) {
     return resolveRef(oas, param.$ref) as OpenAPIV3.ParameterObject | undefined;
@@ -157,10 +155,12 @@ function resolveParameter(
  */
 function resolveResponse(
   oas: OpenAPIV3.Document,
-  response: OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject,
+  response: OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject
 ): OpenAPIV3.ResponseObject | undefined {
   if ("$ref" in response) {
-    return resolveRef(oas, (response as OpenAPIV3.ReferenceObject).$ref) as OpenAPIV3.ResponseObject | undefined;
+    return resolveRef(oas, (response as OpenAPIV3.ReferenceObject).$ref) as
+      | OpenAPIV3.ResponseObject
+      | undefined;
   }
   return response as OpenAPIV3.ResponseObject;
 }
@@ -222,7 +222,10 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
       if (operation.requestBody) {
         let resolvedBody: OpenAPIV3.RequestBodyObject | undefined;
         if ("$ref" in operation.requestBody) {
-          const resolved = resolveRef(oas, (operation.requestBody as OpenAPIV3.ReferenceObject).$ref);
+          const resolved = resolveRef(
+            oas,
+            (operation.requestBody as OpenAPIV3.ReferenceObject).$ref
+          );
           if (resolved) resolvedBody = resolved as OpenAPIV3.RequestBodyObject;
         } else {
           resolvedBody = operation.requestBody;
@@ -290,7 +293,7 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
 
 export function generateOperationsCode(
   operations: OperationInfo[],
-  existingSchemaNames?: Set<string>,
+  existingSchemaNames?: Set<string>
 ): string {
   const operationObjects = operations
     .map((op) => {
@@ -340,9 +343,7 @@ export function generateOperationsCode(
 
       // Find success response (first 2xx) for convenience `response` field
       const successResponse = op.responses.find((r) => r.status.startsWith("2"));
-      const responseCode = successResponse?.schema
-        ? successResponse.schema.zodCode
-        : "z.void()";
+      const responseCode = successResponse?.schema ? successResponse.schema.zodCode : "z.void()";
 
       return `
   '${op.operationId}': {

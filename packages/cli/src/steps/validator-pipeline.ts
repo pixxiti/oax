@@ -1,7 +1,6 @@
 import { format as prettierFormat } from "prettier";
 import type { Step, StepContext, StepOutput } from "../pipeline";
 
-
 export interface ValidatorPipelineOptions {
   /**
    * The step name to read operations from
@@ -327,4 +326,3 @@ export function resetValidatedKyInstance() {
     },
   };
 }
-

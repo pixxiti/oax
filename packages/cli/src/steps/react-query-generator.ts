@@ -78,13 +78,16 @@ export function reactQueryGenerator(options: ReactQueryGeneratorOptions = {}): S
       // Generate React Query hooks based on operations
       const operations = extractOperationsFromOAS(oasData);
       const operationsData = extractOperationsFromSchemaCode(schemaCode);
-      const { hooksCode, clientImports, schemaImports } = generateReactQueryHooks(operations, operationsData);
+      const { hooksCode, clientImports, schemaImports } = generateReactQueryHooks(
+        operations,
+        operationsData
+      );
 
       // Generate query key imports (only for operations that will be used)
       const queryKeyImports = operations
-        .filter(op => op.method.toLowerCase() === 'get') // Only queries use query keys
-        .map(op => `${op.operationId}QueryKey`)
-        .join(', ');
+        .filter((op) => op.method.toLowerCase() === "get") // Only queries use query keys
+        .map((op) => `${op.operationId}QueryKey`)
+        .join(", ");
 
       const fullCode = `import { useQuery, useMutation } from '@tanstack/react-query';
 import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query';
@@ -179,33 +182,34 @@ function extractOperationsFromOAS(oasData: any): OperationInfo[] {
 
 function extractOperationsFromSchemaCode(schemaCode: string): Map<string, OperationTypeInfo> {
   const operationsMap = new Map<string, OperationTypeInfo>();
-  
+
   // Parse the operations object from the schema code
   const operationsMatch = schemaCode.match(/export const operations = \{([\s\S]*?)\} as const;/);
   if (!operationsMatch) return operationsMap;
 
   // Extract individual operations using regex patterns
-  const operationPattern = /(\w+):\s*\{[\s\S]*?method:\s*["'](\w+)["'][\s\S]*?operationId:\s*["'](\w+)["'][\s\S]*?params:\s*z\.object\(([\s\S]*?)\)[\s\S]*?queries:\s*z\.object\(([\s\S]*?)\)[\s\S]*?(?:requestBody:\s*\{\s*schema:\s*(\w+)[\s\S]*?\}[\s\S]*?)?responses:\s*\{[\s\S]*?["'](?:200|201)["']:\s*\{[\s\S]*?schema:\s*([^,\s}]+)/g;
-  
+  const operationPattern =
+    /(\w+):\s*\{[\s\S]*?method:\s*["'](\w+)["'][\s\S]*?operationId:\s*["'](\w+)["'][\s\S]*?params:\s*z\.object\(([\s\S]*?)\)[\s\S]*?queries:\s*z\.object\(([\s\S]*?)\)[\s\S]*?(?:requestBody:\s*\{\s*schema:\s*(\w+)[\s\S]*?\}[\s\S]*?)?responses:\s*\{[\s\S]*?["'](?:200|201)["']:\s*\{[\s\S]*?schema:\s*([^,\s}]+)/g;
+
   let match;
-  match = operationPattern.exec(operationsMatch[1] ?? '');
+  match = operationPattern.exec(operationsMatch[1] ?? "");
   while (match !== null) {
     if (!match) continue;
     const [, , method, operationId, paramsContent, queriesContent, requestBodyType] = match;
     if (!operationId) continue;
     if (!method) continue;
-    
-    const hasParams = paramsContent?.trim() !== '';
-    const hasQueries = queriesContent?.trim() !== '';
-    
+
+    const hasParams = paramsContent?.trim() !== "";
+    const hasQueries = queriesContent?.trim() !== "";
+
     // Determine the actual response status code for this operation
-    let responseStatusCode = '200';
-    if (method?.toLowerCase() === 'post') {
-      responseStatusCode = '201';
+    let responseStatusCode = "200";
+    if (method?.toLowerCase() === "post") {
+      responseStatusCode = "201";
     }
-    
+
     const responseType = `z.infer<(typeof operations.${operationId}.responses)['${responseStatusCode}']['schema']>`;
-    
+
     operationsMap.set(operationId, {
       operationId,
       method,
@@ -214,15 +218,18 @@ function extractOperationsFromSchemaCode(schemaCode: string): Map<string, Operat
       requestBodyType: requestBodyType ? `z.infer<typeof ${requestBodyType}>` : undefined,
       responseType,
     });
-    
+
     // Get next match
-    match = operationPattern.exec(operationsMatch[1] ?? '');
+    match = operationPattern.exec(operationsMatch[1] ?? "");
   }
 
   return operationsMap;
 }
 
-function generateReactQueryHooks(operations: OperationInfo[], operationsTypeMap: Map<string, OperationTypeInfo>): { hooksCode: string; clientImports: string; schemaImports: string } {
+function generateReactQueryHooks(
+  operations: OperationInfo[],
+  operationsTypeMap: Map<string, OperationTypeInfo>
+): { hooksCode: string; clientImports: string; schemaImports: string } {
   const hooks: string[] = [];
   const importedFunctions = new Set<string>();
   const importedSchemas = new Set<string>();
@@ -234,7 +241,7 @@ function generateReactQueryHooks(operations: OperationInfo[], operationsTypeMap:
     const typeInfo = operationsTypeMap.get(op.operationId);
     const pathParams = op.parameters.filter((p) => p.in === "path");
     const queryParams = op.parameters.filter((p) => p.in === "query");
-    
+
     const hasPathParams = pathParams.length > 0;
     const hasQueryParams = queryParams.length > 0;
 
@@ -242,7 +249,7 @@ function generateReactQueryHooks(operations: OperationInfo[], operationsTypeMap:
       // Generate useQuery hook with proper types
       let parameterTypes = "";
       let queryKeyCall = "";
-      const returnType = typeInfo?.responseType || 'unknown';
+      const returnType = typeInfo?.responseType || "unknown";
 
       if (!hasPathParams && !hasQueryParams) {
         // No parameters
@@ -250,18 +257,18 @@ function generateReactQueryHooks(operations: OperationInfo[], operationsTypeMap:
         queryKeyCall = `${op.operationId}QueryKey()`;
       } else if (hasPathParams && !hasQueryParams) {
         // Only path params
-        const paramsType = typeInfo?.paramsType || 'any';
+        const paramsType = typeInfo?.paramsType || "any";
         parameterTypes = `params: ${paramsType}, options?: Omit<UseQueryOptions<${returnType}, HTTPError>, 'queryKey' | 'queryFn'>`;
         queryKeyCall = `${op.operationId}QueryKey(params)`;
       } else if (!hasPathParams && hasQueryParams) {
         // Only query params
-        const queriesType = typeInfo?.queriesType || 'any';
+        const queriesType = typeInfo?.queriesType || "any";
         parameterTypes = `params?: undefined, queries?: ${queriesType}, options?: Omit<UseQueryOptions<${returnType}, HTTPError>, 'queryKey' | 'queryFn'>`;
         queryKeyCall = `${op.operationId}QueryKey(params, queries)`;
       } else {
         // Both path and query params
-        const paramsType = typeInfo?.paramsType || 'any';
-        const queriesType = typeInfo?.queriesType || 'any';
+        const paramsType = typeInfo?.paramsType || "any";
+        const queriesType = typeInfo?.queriesType || "any";
         parameterTypes = `params: ${paramsType}, queries?: ${queriesType}, options?: Omit<UseQueryOptions<${returnType}, HTTPError>, 'queryKey' | 'queryFn'>`;
         queryKeyCall = `${op.operationId}QueryKey(params, queries)`;
       }
@@ -276,17 +283,17 @@ export function ${hookName}(${parameterTypes}) {
 }`);
     } else {
       // Generate useMutation hook with proper types
-      const requestType = typeInfo?.requestBodyType || 'any';
-      const returnType = typeInfo?.responseType || 'unknown';
-      
+      const requestType = typeInfo?.requestBodyType || "any";
+      const returnType = typeInfo?.responseType || "unknown";
+
       // Track schema imports needed for mutations
-      if (typeInfo?.requestBodyType && !typeInfo.requestBodyType.includes('operations.')) {
+      if (typeInfo?.requestBodyType && !typeInfo.requestBodyType.includes("operations.")) {
         const schemaMatch = typeInfo.requestBodyType.match(/z\.infer<typeof (\w+)>/);
         if (schemaMatch?.[1]) {
           importedSchemas.add(schemaMatch[1]);
         }
       }
-      
+
       hooks.push(`
 export function ${hookName}(
   options?: UseMutationOptions<${returnType}, HTTPError, ${requestType}>
@@ -299,17 +306,17 @@ export function ${hookName}(
     }
   }
 
-  const clientImports = `import { ${Array.from(importedFunctions).join(', ')} } from './client'`;
-  
-  let schemaImports = 'import type { operations';
+  const clientImports = `import { ${Array.from(importedFunctions).join(", ")} } from './client'`;
+
+  let schemaImports = "import type { operations";
   if (importedSchemas.size > 0) {
-    schemaImports += `, ${Array.from(importedSchemas).join(', ')}`;
+    schemaImports += `, ${Array.from(importedSchemas).join(", ")}`;
   }
   schemaImports += " } from './schemas';";
-  
+
   return {
     hooksCode: hooks.join("\n"),
     clientImports,
-    schemaImports
+    schemaImports,
   };
 }

@@ -34,7 +34,7 @@ export function queryKeyGenerator(options: QueryKeyGeneratorOptions = {}): Step 
 
       // Extract operations from OAS
       const operations = extractOperationsFromOAS(oasData);
-      
+
       // Generate query key functions
       const code = generateQueryKeyCode(operations);
 
@@ -109,8 +109,8 @@ function extractOperationsFromOAS(oasData: any): OperationInfo[] {
 }
 
 function generateQueryKeyCode(operations: OperationInfo[]): string {
-  const operationIds = operations.map(op => `'${op.operationId}'`).join(' | ');
-  
+  const operationIds = operations.map((op) => `'${op.operationId}'`).join(" | ");
+
   // Generate imports and types first
   const imports = `import type { z } from "zod";
 import type { Operations } from "./schemas";`;
@@ -137,7 +137,7 @@ import type { Operations } from "./schemas";`;
   return key;
 }`;
     })
-    .join('\n\n');
+    .join("\n\n");
 
   // Simplified utilities - all as individual exports for tree-shaking
   const utilities = `

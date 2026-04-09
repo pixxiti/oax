@@ -76,7 +76,7 @@ function resolveRef(oas: OpenAPIV3.Document, ref: string): any {
 
 function resolveParameter(
   oas: OpenAPIV3.Document,
-  param: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject,
+  param: OpenAPIV3.ParameterObject | OpenAPIV3.ReferenceObject
 ): OpenAPIV3.ParameterObject | undefined {
   if ("$ref" in param) return resolveRef(oas, param.$ref);
   return param as OpenAPIV3.ParameterObject;
@@ -84,7 +84,7 @@ function resolveParameter(
 
 function resolveResponse(
   oas: OpenAPIV3.Document,
-  response: OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject,
+  response: OpenAPIV3.ResponseObject | OpenAPIV3.ReferenceObject
 ): OpenAPIV3.ResponseObject | undefined {
   if ("$ref" in response) return resolveRef(oas, (response as OpenAPIV3.ReferenceObject).$ref);
   return response as OpenAPIV3.ResponseObject;
@@ -98,7 +98,12 @@ function collectSchemaDefaults(oas: OpenAPIV3.Document): Map<string, unknown> {
   const defaults = new Map<string, unknown>();
   if (!oas.components?.schemas) return defaults;
   for (const [name, schema] of Object.entries(oas.components.schemas)) {
-    if (schema && typeof schema === "object" && !("$ref" in schema) && (schema as any).default !== undefined) {
+    if (
+      schema &&
+      typeof schema === "object" &&
+      !("$ref" in schema) &&
+      (schema as any).default !== undefined
+    ) {
       defaults.set(sanitizeIdentifier(name), (schema as any).default);
     }
   }
@@ -123,7 +128,7 @@ function generateZodSchemas(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
 
   // Topological sort: collect dependencies, then emit in order
   const schemaEntries = Object.entries(oas.components.schemas).filter(
-    ([, s]) => s && typeof s === "object" && !("$ref" in s),
+    ([, s]) => s && typeof s === "object" && !("$ref" in s)
   );
 
   const nameToIndex = new Map(schemaEntries.map(([name], i) => [name, i]));
@@ -133,7 +138,10 @@ function generateZodSchemas(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
     const refs = new Set<string>();
     function walk(node: any) {
       if (node == null) return;
-      if (Array.isArray(node)) { for (const item of node) walk(item); return; }
+      if (Array.isArray(node)) {
+        for (const item of node) walk(item);
+        return;
+      }
       if (typeof node === "object") {
         if (typeof node.$ref === "string") {
           const refName = node.$ref.split("/").pop();
@@ -148,16 +156,17 @@ function generateZodSchemas(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
 
   // Kahn's algorithm for topological sort
   const deps = schemaEntries.map(([, schema]) => collectLocalRefs(schema));
-  const inDegree = new Array(schemaEntries.length).fill(0);
-  const adjList: number[][] = schemaEntries.map(() => []);
+  const inDegree = new Array<number>(schemaEntries.length).fill(0);
+  const adjList: number[][] = schemaEntries.map(() => [] as number[]);
 
   for (let i = 0; i < schemaEntries.length; i++) {
-    const d = deps[i]!;
+    const d = deps[i];
+    if (!d) continue;
     for (const dep of d) {
       const j = nameToIndex.get(dep);
       if (j !== undefined && j !== i) {
-        adjList[j]!.push(i);
-        inDegree[i]!++;
+        adjList[j]?.push(i);
+        (inDegree[i] as number)++;
       }
     }
   }
@@ -169,10 +178,10 @@ function generateZodSchemas(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
 
   const sorted: number[] = [];
   while (queue.length > 0) {
-    const i = queue.shift()!;
+    const i = queue.shift() as number;
     sorted.push(i);
-    for (const j of adjList[i]!) {
-      inDegree[j]!--;
+    for (const j of adjList[i] ?? []) {
+      (inDegree[j] as number)--;
       if (inDegree[j] === 0) queue.push(j);
     }
   }
@@ -184,7 +193,8 @@ function generateZodSchemas(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
   }
 
   for (const i of sorted) {
-    const entry = schemaEntries[i]!;
+    const entry = schemaEntries[i];
+    if (!entry) continue;
     const [name, schema] = entry;
     const zodCode = generateZodCode(schema as OpenAPIV3.SchemaObject, options);
     schemas.push({ name: sanitizeIdentifier(name), schema: z.any(), zodCode });
@@ -247,7 +257,7 @@ function generateOperations(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
         }
         if (resolvedBody?.content) {
           const entry = Object.entries(resolvedBody.content).find(([mt]) =>
-            matchesMediaType(mt, options.mediaTypeExpr),
+            matchesMediaType(mt, options.mediaTypeExpr)
           );
           if (entry?.[1]?.schema) {
             requestBody = {
@@ -270,10 +280,13 @@ function generateOperations(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
 
           if (responseObj.content) {
             const entry = Object.entries(responseObj.content).find(([mt]) =>
-              matchesMediaType(mt, options.mediaTypeExpr),
+              matchesMediaType(mt, options.mediaTypeExpr)
             );
             if (entry?.[1]?.schema) {
-              responseInfo.schema = { zodCode: generateZodCode(entry[1].schema, options), required: true };
+              responseInfo.schema = {
+                zodCode: generateZodCode(entry[1].schema, options),
+                required: true,
+              };
             }
           }
 
@@ -307,7 +320,7 @@ function generateOperations(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
  */
 export async function generateSchemasFile(
   oas: OpenAPIV3.Document,
-  options?: ZodCodegenOptions,
+  options?: ZodCodegenOptions
 ): Promise<string> {
   const opts: ZodCodegenOptions = {
     ...options,

@@ -192,13 +192,13 @@ describe("oax generator", () => {
 
       const resp200 = op.responses.find((r) => r.status === "200");
       expect(resp200).toBeDefined();
-      expect(resp200!.description).toBe("A list of items");
-      expect(resp200!.schema).toBeDefined();
-      expect(resp200!.schema!.zodCode).toContain("z.array");
+      expect(resp200?.description).toBe("A list of items");
+      expect(resp200?.schema).toBeDefined();
+      expect(resp200?.schema?.zodCode).toContain("z.array");
 
       const resp401 = op.responses.find((r) => r.status === "401");
       expect(resp401).toBeDefined();
-      expect(resp401!.description).toBe("Not authenticated");
+      expect(resp401?.description).toBe("Not authenticated");
     });
 
     it("should inherit path-level parameters and merge with operation parameters", async () => {
@@ -252,13 +252,13 @@ describe("oax generator", () => {
       expect(ops).toHaveLength(2);
 
       // GET should inherit path-level item_id
-      const getOp = ops.find((o) => o.operationId === "getItem")!;
+      const getOp = ops.find((o) => o.operationId === "getItem") as (typeof ops)[number];
       expect(getOp.parameters).toHaveLength(1);
       expect(getOp.parameters[0].name).toBe("item_id");
       expect(getOp.parameters[0].in).toBe("path");
 
       // PATCH should have both item_id (from operation, overriding path-level) and dry_run
-      const patchOp = ops.find((o) => o.operationId === "updateItem")!;
+      const patchOp = ops.find((o) => o.operationId === "updateItem") as (typeof ops)[number];
       expect(patchOp.parameters).toHaveLength(2);
       const paramNames = patchOp.parameters.map((p) => p.name).sort();
       expect(paramNames).toEqual(["dry_run", "item_id"]);
@@ -272,9 +272,7 @@ describe("oax generator", () => {
         info: { title: "Test API", version: "1.0.0" },
         paths: {
           "/items/{item_id}": {
-            parameters: [
-              { $ref: "#/components/parameters/item_id" } as any,
-            ],
+            parameters: [{ $ref: "#/components/parameters/item_id" } as any],
             get: {
               operationId: "getItem",
               responses: {

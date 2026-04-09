@@ -1,5 +1,12 @@
 import type { Step, StepContext, StepOutput } from "../pipeline";
-import { generateZodSchemas, generateSchemaCode, generateSchemasObject, generateOperations, generateOperationsCode, extractBodySchemas } from "../generator";
+import {
+  generateZodSchemas,
+  generateSchemaCode,
+  generateSchemasObject,
+  generateOperations,
+  generateOperationsCode,
+  extractBodySchemas,
+} from "../generator";
 import { format as prettierFormat } from "prettier";
 
 export interface ZodGeneratorOptions {
@@ -57,14 +64,20 @@ ${operationsCode}`;
           inputStep,
           schemaCount: allSchemas.length,
           operationCount: operations.length,
-          schemas: allSchemas.reduce((acc, schema) => {
-            acc[schema.name] = schema;
-            return acc;
-          }, {} as Record<string, any>),
-          operations: operations.reduce((acc, op) => {
-            acc[op.operationId] = op;
-            return acc;
-          }, {} as Record<string, any>),
+          schemas: allSchemas.reduce(
+            (acc, schema) => {
+              acc[schema.name] = schema;
+              return acc;
+            },
+            {} as Record<string, any>
+          ),
+          operations: operations.reduce(
+            (acc, op) => {
+              acc[op.operationId] = op;
+              return acc;
+            },
+            {} as Record<string, any>
+          ),
           generatedAt: new Date().toISOString(),
         },
       };

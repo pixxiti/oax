@@ -43,10 +43,10 @@ export class Pipeline {
   private addAutogenerationComment(content: string, fileExt: string): string {
     const commentInfo = this.getCommentForFileType(fileExt);
     if (!commentInfo) return content;
-    
+
     const { start, end } = commentInfo;
     const timestamp = new Date().toISOString();
-    
+
     if (end) {
       // Multi-line comment style (CSS, HTML, etc.)
       return `${start} This file is auto-generated using oax. Do not edit manually.\n     Generated on: ${timestamp} ${end}\n\n${content}`;
@@ -57,42 +57,42 @@ export class Pipeline {
 
   private getCommentForFileType(ext: string): { start: string; end?: string } | null {
     const commentMap: Record<string, { start: string; end?: string }> = {
-      '.js': { start: '//' },
-      '.ts': { start: '//' },
-      '.jsx': { start: '//' },
-      '.tsx': { start: '//' },
-      '.py': { start: '#' },
-      '.sh': { start: '#' },
-      '.bash': { start: '#' },
-      '.yaml': { start: '#' },
-      '.yml': { start: '#' },
-      '.toml': { start: '#' },
-      '.ini': { start: '#' },
-      '.conf': { start: '#' },
-      '.css': { start: '/*', end: '*/' },
-      '.scss': { start: '//' },
-      '.sass': { start: '//' },
-      '.less': { start: '//' },
-      '.html': { start: '<!--', end: '-->' },
-      '.xml': { start: '<!--', end: '-->' },
-      '.sql': { start: '--' },
-      '.rs': { start: '//' },
-      '.go': { start: '//' },
-      '.java': { start: '//' },
-      '.c': { start: '//' },
-      '.cpp': { start: '//' },
-      '.h': { start: '//' },
-      '.hpp': { start: '//' },
-      '.cs': { start: '//' },
-      '.php': { start: '//' },
-      '.rb': { start: '#' },
-      '.pl': { start: '#' },
-      '.r': { start: '#' },
-      '.lua': { start: '--' },
-      '.vim': { start: '"' },
-      '.dockerfile': { start: '#' },
-      '.gitignore': { start: '#' },
-      '.env': { start: '#' }
+      ".js": { start: "//" },
+      ".ts": { start: "//" },
+      ".jsx": { start: "//" },
+      ".tsx": { start: "//" },
+      ".py": { start: "#" },
+      ".sh": { start: "#" },
+      ".bash": { start: "#" },
+      ".yaml": { start: "#" },
+      ".yml": { start: "#" },
+      ".toml": { start: "#" },
+      ".ini": { start: "#" },
+      ".conf": { start: "#" },
+      ".css": { start: "/*", end: "*/" },
+      ".scss": { start: "//" },
+      ".sass": { start: "//" },
+      ".less": { start: "//" },
+      ".html": { start: "<!--", end: "-->" },
+      ".xml": { start: "<!--", end: "-->" },
+      ".sql": { start: "--" },
+      ".rs": { start: "//" },
+      ".go": { start: "//" },
+      ".java": { start: "//" },
+      ".c": { start: "//" },
+      ".cpp": { start: "//" },
+      ".h": { start: "//" },
+      ".hpp": { start: "//" },
+      ".cs": { start: "//" },
+      ".php": { start: "//" },
+      ".rb": { start: "#" },
+      ".pl": { start: "#" },
+      ".r": { start: "#" },
+      ".lua": { start: "--" },
+      ".vim": { start: '"' },
+      ".dockerfile": { start: "#" },
+      ".gitignore": { start: "#" },
+      ".env": { start: "#" },
     };
 
     return commentMap[ext] || null;
@@ -138,7 +138,7 @@ export class Pipeline {
           // Add autogeneration comment based on file extension
           const ext = path.extname(step.outputFile).toLowerCase();
           let content: string;
-          
+
           if (typeof output.content === "string") {
             content = this.addAutogenerationComment(output.content, ext);
           } else {

@@ -119,13 +119,15 @@ function generateStringSchema(schema: any, version: number, _options?: ZodCodege
 function generateNumberSchema(schema: any): string {
   let zodSchema = "z.number()";
   if (schema.minimum !== undefined) {
-    zodSchema += schema.exclusiveMinimum === true ? `.gt(${schema.minimum})` : `.gte(${schema.minimum})`;
+    zodSchema +=
+      schema.exclusiveMinimum === true ? `.gt(${schema.minimum})` : `.gte(${schema.minimum})`;
   }
   if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === "number") {
     zodSchema += `.gt(${schema.exclusiveMinimum})`;
   }
   if (schema.maximum !== undefined) {
-    zodSchema += schema.exclusiveMaximum === true ? `.lt(${schema.maximum})` : `.lte(${schema.maximum})`;
+    zodSchema +=
+      schema.exclusiveMaximum === true ? `.lt(${schema.maximum})` : `.lte(${schema.maximum})`;
   }
   if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === "number") {
     zodSchema += `.lt(${schema.exclusiveMaximum})`;
@@ -137,13 +139,15 @@ function generateNumberSchema(schema: any): string {
 function generateIntegerSchema(schema: any): string {
   let zodSchema = "z.number().int()";
   if (schema.minimum !== undefined) {
-    zodSchema += schema.exclusiveMinimum === true ? `.gt(${schema.minimum})` : `.gte(${schema.minimum})`;
+    zodSchema +=
+      schema.exclusiveMinimum === true ? `.gt(${schema.minimum})` : `.gte(${schema.minimum})`;
   }
   if (schema.exclusiveMinimum !== undefined && typeof schema.exclusiveMinimum === "number") {
     zodSchema += `.gt(${schema.exclusiveMinimum})`;
   }
   if (schema.maximum !== undefined) {
-    zodSchema += schema.exclusiveMaximum === true ? `.lt(${schema.maximum})` : `.lte(${schema.maximum})`;
+    zodSchema +=
+      schema.exclusiveMaximum === true ? `.lt(${schema.maximum})` : `.lte(${schema.maximum})`;
   }
   if (schema.exclusiveMaximum !== undefined && typeof schema.exclusiveMaximum === "number") {
     zodSchema += `.lt(${schema.exclusiveMaximum})`;
@@ -209,7 +213,10 @@ function generateObjectSchema(schema: any, options?: ZodCodegenOptions): string 
     zodSchema += ".passthrough()";
   } else if (typeof schema.additionalProperties === "object") {
     zodSchema += ".passthrough() /* additional properties allowed */";
-  } else if (schema.additionalProperties === undefined && options?.additionalPropsDefault === true) {
+  } else if (
+    schema.additionalProperties === undefined &&
+    options?.additionalPropsDefault === true
+  ) {
     zodSchema += ".passthrough()";
   }
 
