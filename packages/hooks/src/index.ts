@@ -51,6 +51,14 @@ type MutationParams<T extends Operations, K extends keyof T> = BodyById<T, K> ex
     ? BodyById<T, K>
     : QueryParams<T, K> & BodyById<T, K>;
 
+// Body-only variables for when inputs are pre-bound at hook instantiation
+type MutateBodyVariables<T extends Operations, K extends keyof T> = BodyById<
+  T,
+  K
+> extends never
+  ? void
+  : BodyById<T, K>;
+
 // Define separate interfaces for query and mutation hooks
 interface QueryHookInterface<
   TData,
@@ -94,6 +102,23 @@ interface MutationHookInterface<
       "mutationFn"
     >
   ): ReturnType<typeof useMutation<TData, ErrorsById<TOperations, TOperationId>, TVariables>>;
+  (
+    inputs: QueryParams<TOperations, TOperationId>,
+    mutationOptions?: Omit<
+      UseMutationOptions<
+        TData,
+        ErrorsById<TOperations, TOperationId>,
+        MutateBodyVariables<TOperations, TOperationId>
+      >,
+      "mutationFn"
+    >
+  ): ReturnType<
+    typeof useMutation<
+      TData,
+      ErrorsById<TOperations, TOperationId>,
+      MutateBodyVariables<TOperations, TOperationId>
+    >
+  >;
 }
 
 // Helper type to detect GET operations more reliably
@@ -200,31 +225,75 @@ export function createHooks<const T extends Operations>(
         });
       };
     } else {
-      hooks[hookName] = (mutationOptions?: any) => {
+      hooks[hookName] = (firstArg?: any, secondArg?: any) => {
+        const hasInputs =
+          typedOperation.params || typedOperation.queries || typedOperation.headers;
+        const hasBody = typedOperation.requestBody;
+
+        // Determine if called with pre-bound inputs (2-arg pattern) or just options (1-arg pattern)
+        let preBoundInputs: any = undefined;
+        let mutationOptions: any = undefined;
+
+        if (secondArg !== undefined) {
+          // 2-arg: (inputs, options)
+          preBoundInputs = firstArg;
+          mutationOptions = secondArg;
+        } else if (
+          firstArg &&
+          typeof firstArg === "object" &&
+          ("params" in firstArg || "queries" in firstArg || "headers" in firstArg)
+        ) {
+          // 1-arg that looks like inputs (has params/queries/headers keys)
+          preBoundInputs = firstArg;
+        } else {
+          // 1-arg mutation options or no args
+          mutationOptions = firstArg;
+        }
+
+        if (preBoundInputs) {
+          // Pre-bound pattern: inputs captured at hook time, mutate() receives only body
+          const inputs = {
+            params: preBoundInputs.params,
+            queries: preBoundInputs.queries,
+            headers: preBoundInputs.headers,
+          };
+
+          return useMutation({
+            mutationFn: async (body: any) => {
+              if (hasInputs && hasBody) {
+                return client[operationId](inputs, body);
+              }
+              if (hasInputs) {
+                return client[operationId](inputs);
+              }
+              if (hasBody) {
+                return client[operationId](undefined, body);
+              }
+              return client[operationId]();
+            },
+            ...mutationOptions,
+          });
+        }
+
+        // Non-pre-bound pattern: mutate() receives full MutationParams
         return useMutation({
           mutationFn: async (variables: MutationParams<T, any>) => {
             if (!variables) {
               return client[operationId]();
             }
 
-            const hasInputs =
-              typedOperation.params || typedOperation.queries || typedOperation.headers;
-            const hasBody = typedOperation.requestBody;
-
-            // Check if variables has the new structured format (params, queries, headers)
+            // Check if variables has structured format (params, queries, headers)
             if (
               variables &&
               typeof variables === "object" &&
               ("params" in variables || "queries" in variables || "headers" in variables)
             ) {
-              // Extract structured parameters
               const inputs = {
                 params: "params" in variables ? variables.params : undefined,
                 queries: "queries" in variables ? variables.queries : undefined,
                 headers: "headers" in variables ? variables.headers : undefined,
               };
 
-              // Extract body data (everything that's not params/queries/headers)
               const bodyData: any = {};
               for (const [key, value] of Object.entries(variables)) {
                 if (key !== "params" && key !== "queries" && key !== "headers") {
@@ -233,7 +302,6 @@ export function createHooks<const T extends Operations>(
               }
               const body = Object.keys(bodyData).length > 0 ? bodyData : undefined;
 
-              // Call with structured format
               if (hasInputs && hasBody) {
                 return client[operationId](inputs, body);
               }
@@ -246,7 +314,6 @@ export function createHooks<const T extends Operations>(
               return client[operationId]();
             }
 
-            // Fallback for non-structured variables (treat as body)
             if (hasBody) {
               return client[operationId](undefined, variables);
             }
@@ -279,4 +346,4 @@ function createGetKeyFunction<T extends Operations>(
   };
 }
 
-export type { QueryParams, MutationParams, GetKeyFunction };
+export type { QueryParams, MutationParams, MutateBodyVariables, GetKeyFunction };
