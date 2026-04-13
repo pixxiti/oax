@@ -15,7 +15,7 @@ export function sanitizeIdentifier(name: string): string {
 }
 
 function escapeStringLiteral(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n").replace(/\r/g, "\\r");
 }
 
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
