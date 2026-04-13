@@ -31,8 +31,6 @@ const mockOperations = {
     params: z.object({
       petId: z.string(),
     }),
-    queries: z.object({}),
-    headers: z.object({}),
     responses: {
       "200": {
         description: "Pet details",
@@ -44,12 +42,10 @@ const mockOperations = {
     method: "get",
     path: "/users",
     operationId: "getUsersByStatus",
-    params: z.object({}),
     queries: z.object({
       status: z.string().optional(),
       limit: z.number().optional(),
     }),
-    headers: z.object({}),
     responses: {
       "200": {
         description: "List of users",
@@ -61,9 +57,6 @@ const mockOperations = {
     method: "post",
     path: "/pets",
     operationId: "createPet",
-    params: z.object({}),
-    queries: z.object({}),
-    headers: z.object({}),
     requestBody: {
       required: true,
       schema: z.object({ name: z.string(), species: z.string() }),
@@ -196,7 +189,6 @@ describe("createHooks", () => {
         queries: z.object({
           status: z.string().optional(),
         }),
-        headers: z.object({}),
         responses: {
           "200": {
             description: "User pets",
@@ -325,7 +317,6 @@ describe("createHooks", () => {
           queries: z.object({
             status: z.string().optional(),
           }),
-          headers: z.object({}),
           responses: {
             "200": {
               description: "User pets",
@@ -366,8 +357,6 @@ describe("createHooks", () => {
           method: "get",
           path: "/protected",
           operationId: "getProtectedData",
-          params: z.object({}),
-          queries: z.object({}),
           headers: z.object({
             authorization: z.string(),
             "x-api-key": z.string(),

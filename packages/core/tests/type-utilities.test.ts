@@ -47,11 +47,9 @@ const testOperations = {
     operationId: "createUser",
     method: "post",
     path: "/users",
-    params: z.object({}),
     queries: z.object({
       source: z.string().optional(),
     }),
-    headers: z.object({}),
     requestBody: {
       schema: z.object({
         name: z.string().min(1),
@@ -105,8 +103,6 @@ const testOperations = {
       userId: z.uuid(),
       validate: z.boolean().optional(),
     }),
-    queries: z.object({}),
-    headers: z.object({}),
     requestBody: {
       schema: z.object({
         name: z.string().min(1).optional(),
@@ -141,8 +137,6 @@ const testOperations = {
     params: z.object({
       id: z.string(),
     }),
-    queries: z.object({}),
-    headers: z.object({}),
     requestBody: undefined,
     responses: {
       "204": {
@@ -160,10 +154,6 @@ const testOperations = {
     operationId: "noParams",
     method: "get",
     path: "/status",
-    params: z.object({}),
-    queries: z.object({}),
-    headers: z.object({}),
-    requestBody: undefined,
     responses: {
       "200": {
         description: "Status",
@@ -230,8 +220,7 @@ describe("Type Utilities", () => {
     it("should handle operations with optional query parameters", () => {
       type CreateUserParams = ParamsById<typeof testOperations, "createUser">;
 
-      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
-      expectTypeOf<CreateUserParams>().toEqualTypeOf<{}>();
+      expectTypeOf<CreateUserParams>().toEqualTypeOf<never>();
     });
 
     it("should handle operations with mixed required and optional parameters", () => {
@@ -246,8 +235,7 @@ describe("Type Utilities", () => {
     it("should return never for operations with no parameters", () => {
       type NoParamsParams = ParamsById<typeof testOperations, "noParams">;
 
-      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
-      expectTypeOf<NoParamsParams>().toEqualTypeOf<{}>();
+      expectTypeOf<NoParamsParams>().toEqualTypeOf<never>();
     });
   });
 
@@ -271,15 +259,13 @@ describe("Type Utilities", () => {
     it("should return never for operations without query parameters", () => {
       type DeleteUserQueries = QueriesById<typeof testOperations, "deleteUser">;
 
-      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
-      expectTypeOf<DeleteUserQueries>().toEqualTypeOf<{}>();
+      expectTypeOf<DeleteUserQueries>().toEqualTypeOf<never>();
     });
 
     it("should handle mixed parameter types and extract only queries", () => {
       type UpdateUserQueries = QueriesById<typeof testOperations, "updateUser">;
 
-      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
-      expectTypeOf<UpdateUserQueries>().toEqualTypeOf<{}>();
+      expectTypeOf<UpdateUserQueries>().toEqualTypeOf<never>();
     });
   });
 
@@ -328,10 +314,6 @@ describe("Type Utilities", () => {
           operationId: "customOp",
           method: "get",
           path: "/custom",
-          params: z.object({}),
-          queries: z.object({}),
-          headers: z.object({}),
-          requestBody: undefined,
           responses: {
             "203": {
               description: "Non-Authoritative Information",
@@ -436,9 +418,7 @@ describe("Type Utilities", () => {
         };
       }>();
 
-      // TODO(task-4): once z.object({}) fixtures are removed, createUser won't have params
-      // and this union will resolve to { id: string } | never = { id: string }
-      expectTypeOf<GetUserParams>().toEqualTypeOf<{ id: string } | {}>();
+      expectTypeOf<GetUserParams>().toEqualTypeOf<{ id: string }>();
 
       // Union types with these utilities are not currently supported
       // and may result in unexpected behavior - this is a known limitation
@@ -450,10 +430,6 @@ describe("Type Utilities", () => {
           operationId: "noSchemaResponse",
           method: "get",
           path: "/no-schema",
-          params: z.object({}),
-          queries: z.object({}),
-          headers: z.object({}),
-          requestBody: undefined,
           responses: {
             "200": {
               description: "Success without schema",
@@ -474,10 +450,6 @@ describe("Type Utilities", () => {
           operationId: "errorOnly",
           method: "get",
           path: "/error",
-          params: z.object({}),
-          queries: z.object({}),
-          headers: z.object({}),
-          requestBody: undefined,
           responses: {
             "400": {
               description: "Bad request",
@@ -574,13 +546,11 @@ describe("Type Utilities", () => {
           operationId: "complexOp",
           method: "post",
           path: "/complex",
-          params: z.object({}),
           queries: z.object({
             level1: z.object({
               level2: z.array(z.string()),
             }),
           }),
-          headers: z.object({}),
           requestBody: {
             schema: z.discriminatedUnion("type", [
               z.object({
