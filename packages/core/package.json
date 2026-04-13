@@ -1,6 +1,6 @@
 {
   "name": "@pixxiti/oax-core",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Runtime API client wrapper for generated oax clients",
   "type": "module",
   "main": "./dist/index.js",
