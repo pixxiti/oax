@@ -1,11 +1,10 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T20:37:59.352Z
+// Generated on: 2026-04-13T21:00:46.181Z
 
 import ky, { type Options } from "ky";
 
 export interface KyClientOptions extends Options {
   baseUrl: string;
-  prefixUrl?: string;
 }
 
 let clientOptions: KyClientOptions | undefined;
@@ -23,11 +22,7 @@ export function getKyInstance(): typeof ky {
   }
 
   if (!kyInstance) {
-    const { baseUrl, prefixUrl, ...restOptions } = clientOptions;
-    kyInstance = ky.create({
-      prefixUrl: prefixUrl || baseUrl,
-      ...restOptions,
-    });
+    kyInstance = ky.create(clientOptions);
   }
 
   return kyInstance;

@@ -1,13 +1,13 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T20:37:59.381Z
+// Generated on: 2026-04-13T21:00:46.216Z
 
 import type { z } from "zod";
 import {
   getValidatedKyInstance,
   configureClient,
   type ValidatedKyClientOptions,
-} from "./validator-client";
-import type { NewPet, Pet } from "./schemas";
+} from "./validator-client.js";
+import type { NewPet, Pet } from "./schemas.js";
 
 // Re-export for convenience
 export { configureClient, type ValidatedKyClientOptions };

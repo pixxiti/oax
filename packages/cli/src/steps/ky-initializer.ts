@@ -21,7 +21,6 @@ export function kyInitializer(options: KyInitializerOptions = {}): Step {
 
 export interface KyClientOptions extends Options {
   baseUrl: string;
-  prefixUrl?: string;
 }
 
 let clientOptions: KyClientOptions | undefined;
@@ -37,15 +36,11 @@ export function getKyInstance(): typeof ky {
   if (!clientOptions) {
     throw new Error('Client not configured. Call configureClient() first.');
   }
-  
+
   if (!kyInstance) {
-    const { baseUrl, prefixUrl, ...restOptions } = clientOptions;
-    kyInstance = ky.create({
-      prefixUrl: prefixUrl || baseUrl,
-      ...restOptions,
-    });
+    kyInstance = ky.create(clientOptions);
   }
-  
+
   return kyInstance;
 }
 

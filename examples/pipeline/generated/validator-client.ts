@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T20:37:59.377Z
+// Generated on: 2026-04-13T21:00:46.209Z
 
 import type ky from "ky";
 import type { BeforeRequestHook, AfterResponseHook } from "ky";
@@ -8,8 +8,8 @@ import {
   getKyInstance,
   configureClient as baseConfigureClient,
   type KyClientOptions,
-} from "./ky-client";
-import { operations, type Operations } from "./schemas";
+} from "./ky-client.js";
+import { operations, type Operations } from "./schemas.js";
 
 // Use the actual operation type from the operations
 type Operation = Operations[keyof Operations];
@@ -231,7 +231,7 @@ function createValidationHooks() {
   if (!validationHelpers)
     return { beforeRequest: undefined, afterResponse: undefined };
 
-  const beforeRequest: BeforeRequestHook = (request, options) => {
+  const beforeRequest: BeforeRequestHook = ({ request, options }) => {
     const operationId = (options as any).operationId as string;
     const operation = operationId
       ? operations[operationId as keyof Operations]
@@ -266,11 +266,11 @@ function createValidationHooks() {
     return request;
   };
 
-  const afterResponse: AfterResponseHook = async (
-    _request,
+  const afterResponse: AfterResponseHook = async ({
+    request: _request,
     options,
     response,
-  ) => {
+  }) => {
     const operationId = (options as any).operationId as string;
     const operation = operationId
       ? operations[operationId as keyof Operations]

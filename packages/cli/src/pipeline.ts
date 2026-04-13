@@ -1,5 +1,6 @@
 import * as path from "path";
 import * as fs from "fs/promises";
+import { tsImport } from "tsx/esm/api";
 
 export interface StepInput {
   name: string;
@@ -168,9 +169,7 @@ export async function loadPipelineConfig(configPath = "oax.config.ts"): Promise<
     // First check if the file exists
     await fs.access(fullPath);
 
-    // For both .ts and .js files, use dynamic import
-    // tsx should handle TypeScript files automatically when it's running
-    const module = await import(fullPath);
+    const module = await tsImport(fullPath, import.meta.url);
     const config: PipelineConfig = module.default || module;
 
     if (!config?.steps) {

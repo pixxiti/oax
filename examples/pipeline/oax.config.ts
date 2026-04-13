@@ -1,5 +1,5 @@
-import { definePipelineConfig } from "../../packages/cli/src/config";
-import { createStandardPipeline } from "../../packages/cli/src/steps";
+import { definePipelineConfig } from "@pixxiti/oax-cli/config";
+import { createStandardPipeline } from "@pixxiti/oax-cli/steps";
 
 export default definePipelineConfig({
   outputDir: "generated",

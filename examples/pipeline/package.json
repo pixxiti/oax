@@ -5,13 +5,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "npx tsx ../../packages/cli/src/index.ts build",
+    "build": "oax build",
     "typecheck": "tsc --noEmit",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",
     "format": "biome format --write ."
   },
   "dependencies": {
+    "@pixxiti/oax-cli": "workspace:*",
     "@pixxiti/oax-core": "workspace:*",
     "@tanstack/react-query": "^5.99.0",
     "ky": "^2.0.0",

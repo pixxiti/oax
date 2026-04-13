@@ -230,10 +230,10 @@ export function configureClient(options: ValidatedKyClientOptions) {
 function createValidationHooks() {
   if (!validationHelpers) return { beforeRequest: undefined, afterResponse: undefined };
   
-  const beforeRequest: BeforeRequestHook = (request, options) => {
+  const beforeRequest: BeforeRequestHook = ({ request, options }) => {
     const operationId = (options as any).operationId as string;
     const operation = operationId ? operations[operationId as keyof Operations] : undefined;
-    
+
     if (!operation || !validationHelpers) return request;
 
     try {
@@ -256,10 +256,10 @@ function createValidationHooks() {
     return request;
   };
 
-  const afterResponse: AfterResponseHook = async (_request, options, response) => {
+  const afterResponse: AfterResponseHook = async ({ request: _request, options, response }) => {
     const operationId = (options as any).operationId as string;
     const operation = operationId ? operations[operationId as keyof Operations] : undefined;
-    
+
     if (!operation || !validationHelpers?.validateResponseData) return response;
 
     const contentType = response.headers.get("content-type");

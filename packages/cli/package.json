@@ -7,7 +7,9 @@
   "exports": {
     ".": "./dist/exports.js",
     "./lib": "./dist/lib.js",
-    "./cli": "./dist/index.js"
+    "./cli": "./dist/index.js",
+    "./config": "./dist/config.js",
+    "./steps": "./dist/steps/index.js"
   },
   "bin": {
     "oax": "./dist/index.js"

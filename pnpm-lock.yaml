@@ -94,6 +94,9 @@ importers:
 
   examples/pipeline:
     dependencies:
+      '@pixxiti/oax-cli':
+        specifier: workspace:*
+        version: link:../../packages/cli
       '@pixxiti/oax-core':
         specifier: workspace:*
         version: link:../../packages/core

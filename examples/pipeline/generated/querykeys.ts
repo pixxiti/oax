@@ -1,8 +1,8 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T20:37:59.389Z
+// Generated on: 2026-04-13T21:00:46.224Z
 
 import type { z } from "zod";
-import type { Operations } from "./schemas";
+import type { Operations } from "./schemas.js";
 
 export function listPetsQueryKey<
   TParams extends Record<string, never> = Record<string, never>,
