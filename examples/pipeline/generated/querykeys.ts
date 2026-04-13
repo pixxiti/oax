@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T21:44:48.341Z
+// Generated on: 2026-04-13T21:46:43.018Z
 
 import type { z } from "zod";
 import type { Operations } from "./schemas.js";
