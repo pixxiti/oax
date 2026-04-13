@@ -166,7 +166,7 @@ export function createValidationHelpers(): ValidationHelpers {
     },
 
     validateRequestBody: (body: unknown, operation: Operation) => {
-      if (!body || !operation.requestBody) {
+      if (!body || !('requestBody' in operation) || !operation.requestBody) {
         return body;
       }
 

@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T21:46:43.007Z
+// Generated on: 2026-04-13T21:48:53.573Z
 
 import type ky from "ky";
 import type { BeforeRequestHook, AfterResponseHook } from "ky";
@@ -145,7 +145,7 @@ export function createValidationHelpers(): ValidationHelpers {
     },
 
     validateRequestBody: (body: unknown, operation: Operation) => {
-      if (!body || !operation.requestBody) {
+      if (!body || !("requestBody" in operation) || !operation.requestBody) {
         return body;
       }
 

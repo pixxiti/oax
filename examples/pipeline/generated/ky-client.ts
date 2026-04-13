@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T21:46:42.982Z
+// Generated on: 2026-04-13T21:48:53.548Z
 
 import ky, { type Options } from "ky";
 
