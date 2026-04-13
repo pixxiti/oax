@@ -105,6 +105,7 @@ export function createValidationHelpers(): ValidationHelpers {
 
       // Validate path parameters
       if (
+        'params' in operation &&
         operation.params &&
         typeof operation.params === "object" &&
         "safeParse" in operation.params
@@ -122,6 +123,7 @@ export function createValidationHelpers(): ValidationHelpers {
 
       // Validate query parameters
       if (
+        'queries' in operation &&
         operation.queries &&
         typeof operation.queries === "object" &&
         "safeParse" in operation.queries
@@ -139,6 +141,7 @@ export function createValidationHelpers(): ValidationHelpers {
 
       // Validate header parameters
       if (
+        'headers' in operation &&
         operation.headers &&
         typeof operation.headers === "object" &&
         "safeParse" in operation.headers

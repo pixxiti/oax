@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T19:54:53.679Z
+// Generated on: 2026-04-13T20:03:02.133Z
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type {
@@ -7,9 +7,7 @@ import type {
   UseQueryOptions,
 } from "@tanstack/react-query";
 import type { HTTPError } from "ky";
-import type { z } from "zod";
 import { listPets, createPet, getPetById } from "./client";
-import type { operations } from "./schemas";
 import { listPetsQueryKey, getPetByIdQueryKey } from "./querykeys";
 
 export function useListPets(

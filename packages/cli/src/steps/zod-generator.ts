@@ -2,7 +2,6 @@ import type { Step, StepContext, StepOutput } from "../pipeline";
 import {
   generateZodSchemas,
   generateSchemaCode,
-  generateSchemasObject,
   generateOperations,
   generateOperationsCode,
   extractBodySchemas,

@@ -89,13 +89,19 @@ export function reactQueryGenerator(options: ReactQueryGeneratorOptions = {}): S
         .map((op) => `${op.operationId}QueryKey`)
         .join(", ");
 
-      const fullCode = `import { useQuery, useMutation } from '@tanstack/react-query';
-import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query';
-import type { HTTPError } from 'ky';
-import type { z } from 'zod';
-${clientImports}
-${schemaImports}
-import { ${queryKeyImports} } from './querykeys';
+      const needsZod = hooksCode.includes("z.infer");
+      const needsOperations = hooksCode.includes("operations.");
+
+      const imports = [`import { useQuery, useMutation } from '@tanstack/react-query'`,
+        `import type { UseMutationOptions, UseQueryOptions } from '@tanstack/react-query'`,
+        `import type { HTTPError } from 'ky'`,
+        needsZod ? `import type { z } from 'zod'` : '',
+        clientImports,
+        needsOperations ? schemaImports : '',
+        queryKeyImports ? `import { ${queryKeyImports} } from './querykeys'` : '',
+      ].filter(Boolean).join('\n');
+
+      const fullCode = `${imports}
 
 ${hooksCode}`;
 

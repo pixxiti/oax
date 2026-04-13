@@ -118,9 +118,18 @@ import type { Operations } from "./schemas";`;
   // Generate individual operation query key functions (simplified)
   const operationQueryKeys = operations
     .map((op) => {
+      const hasPathParams = op.parameters.some((p) => p.in === "path");
+      const hasQueryParams = op.parameters.some((p) => p.in === "query");
+      const paramsType = hasPathParams
+        ? `Partial<z.infer<Operations['${op.operationId}']['params']>>`
+        : "Record<string, never>";
+      const queriesType = hasQueryParams
+        ? `Partial<z.infer<Operations['${op.operationId}']['queries']>>`
+        : "Record<string, never>";
+
       return `export function ${op.operationId}QueryKey<
-  TParams extends Partial<z.infer<Operations['${op.operationId}']['params']>> = Record<string, never>,
-  TQueries extends Partial<z.infer<Operations['${op.operationId}']['queries']>> = Record<string, never>
+  TParams extends ${paramsType} = Record<string, never>,
+  TQueries extends ${queriesType} = Record<string, never>
 >(
   params?: TParams,
   queries?: TQueries
@@ -154,8 +163,8 @@ export function createOperationKey(operationId: OperationId) {
  * Get keys with operation ID and params (useful for partial invalidation)
  */
 export function createOperationWithParamsKey<T extends OperationId>(
-  operationId: T, 
-  params: Partial<z.infer<Operations[T]['params']>>
+  operationId: T,
+  params: 'params' extends keyof Operations[T] ? Partial<z.infer<Operations[T]['params']>> : Record<string, never>
 ) {
   return [operationId, params] as const;
 }
@@ -164,9 +173,9 @@ export function createOperationWithParamsKey<T extends OperationId>(
  * Get exact keys with operation ID, params, and queries (for exact matching)
  */
 export function createExactKey<T extends OperationId>(
-  operationId: T, 
-  params?: Partial<z.infer<Operations[T]['params']>>, 
-  queries?: Partial<z.infer<Operations[T]['queries']>>
+  operationId: T,
+  params?: 'params' extends keyof Operations[T] ? Partial<z.infer<Operations[T]['params']>> : Record<string, never>,
+  queries?: 'queries' extends keyof Operations[T] ? Partial<z.infer<Operations[T]['queries']>> : Record<string, never>
 ) {
   if (queries !== undefined) {
     return [operationId, params, queries] as const;
