@@ -2,11 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  resolveSpecPath,
-  filterSpec,
-  mergeSpecs,
-} from "../src/spec-resolver";
+import { filterSpec, mergeSpecs, resolveSpecPath } from "../src/spec-resolver";
 
 describe("resolveSpecPath", () => {
   it("resolves @-prefixed paths via node_modules", () => {

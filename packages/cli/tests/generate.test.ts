@@ -2,8 +2,8 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { type GenerateOptions, generate } from "../src/generate";
 import { defineConfig, defineManifest } from "../src/manifest";
-import { generate, type GenerateOptions } from "../src/generate";
 
 const fixturesDir = path.resolve(__dirname, "fixtures");
 const petstorePath = path.join(fixturesDir, "petstore.json");
@@ -146,7 +146,10 @@ describe("generate", () => {
     fs.mkdirSync(dir2, { recursive: true });
 
     const goodManifest = defineManifest({ name: "good", sources: [{ path: petstorePath }] });
-    const badManifest = defineManifest({ name: "bad", sources: [{ path: "/nonexistent/spec.json" }] });
+    const badManifest = defineManifest({
+      name: "bad",
+      sources: [{ path: "/nonexistent/spec.json" }],
+    });
 
     const results = await generate({
       projectRoot: tmpDir,
@@ -179,7 +182,7 @@ describe("generate", () => {
     expect(results).toHaveLength(1);
     expect(results[0].status).toBe("rejected");
     expect((results[0] as PromiseRejectedResult).reason.message).toContain(
-      "no oax.config.ts was found",
+      "no oax.config.ts was found"
     );
   });
 });

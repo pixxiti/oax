@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { defineManifest, resolveManifest, type Source } from "../src/manifest";
+import { type Source, defineManifest, resolveManifest } from "../src/manifest";
 
 describe("defineManifest", () => {
   it("returns a manifest from a plain object", () => {
@@ -76,8 +76,8 @@ describe("resolveManifest", () => {
     expect(resolved.name).toBe("petstore-filtered");
     expect(resolved.sources[0].path).toBe("specs/petstore.yaml");
     expect(resolved.sources[0].filter).toBeInstanceOf(Function);
-    expect(resolved.sources[0].filter!("listPets")).toBe(true);
-    expect(resolved.sources[0].filter!("createPet")).toBe(false);
+    expect(resolved.sources[0].filter?.("listPets")).toBe(true);
+    expect(resolved.sources[0].filter?.("createPet")).toBe(false);
     expect(resolved.options).toEqual({ strictObjects: false });
   });
 

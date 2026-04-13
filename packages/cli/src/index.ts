@@ -2,10 +2,10 @@
 import * as path from "path";
 import { Command } from "commander";
 import * as fs from "fs/promises";
+import { defaultConfigPath, discoverManifests, loadConfig, loadManifest } from "./discovery";
+import { type GenerateResult, generate } from "./generate";
 import { generateClient, parseOAS } from "./generator";
 import { Pipeline, loadPipelineConfig } from "./pipeline";
-import { discoverManifests, loadConfig, loadManifest, defaultConfigPath } from "./discovery";
-import { generate, type GenerateResult } from "./generate";
 
 const program = new Command();
 
@@ -39,7 +39,7 @@ program
       manifestPaths.map(async (p) => ({
         path: p,
         manifest: await loadManifest(p),
-      })),
+      }))
     );
 
     const total = manifests.length;
@@ -62,7 +62,7 @@ program
       const label = result.name.padEnd(24);
 
       if (result.status === "fulfilled") {
-        const relOutput = path.relative(projectRoot, result.outputDir!);
+        const relOutput = path.relative(projectRoot, result.outputDir ?? "");
         console.log(`  ${counter} ${label} -> ${relOutput}/`);
       } else {
         console.log(`  ${counter} ${label} FAILED`);

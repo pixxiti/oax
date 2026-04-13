@@ -39,7 +39,7 @@ export interface GenerateResult {
 
 function mergeOptions(
   configOptions: BuildOptions,
-  manifestOptions?: BuildOptions,
+  manifestOptions?: BuildOptions
 ): Required<BuildOptions> {
   return {
     ...DEFAULT_BUILD_OPTIONS,
@@ -53,15 +53,14 @@ function mergeOptions(
 async function processManifest(
   entry: ManifestEntry,
   config: Config | undefined,
-  projectRoot: string,
+  projectRoot: string
 ): Promise<{ name: string; outputDir: string }> {
   // Resolve manifest (call function or use object)
   let resolved: ManifestInput;
   if (typeof entry.manifest.input === "function") {
     if (!config) {
       throw new Error(
-        `Manifest at ${entry.path} uses function form but no oax.config.ts was found. ` +
-          `Use the object form of defineManifest or create an oax.config.ts with your sources.`,
+        `Manifest at ${entry.path} uses function form but no oax.config.ts was found. Use the object form of defineManifest or create an oax.config.ts with your sources.`
       );
     }
     resolved = resolveManifest(entry.manifest, config.sources);
@@ -99,7 +98,8 @@ async function processManifest(
       specPath = mergeSpecs(resolvedSources, tmpDir);
       isTempSpec = true;
     } else {
-      const source = resolved.sources[0]!;
+      const source = resolved.sources[0];
+      if (!source) throw new Error(`Manifest "${resolved.name}" has no sources`);
       specPath = resolveSpecPath(source.path, projectRoot);
 
       if (source.filter) {
@@ -155,11 +155,12 @@ export async function generate(options: GenerateOptions): Promise<GenerateResult
   }
 
   const settled = await Promise.allSettled(
-    manifests.map((entry) => processManifest(entry, config, projectRoot)),
+    manifests.map((entry) => processManifest(entry, config, projectRoot))
   );
 
   return settled.map((result, i) => {
-    const entry = manifests[i]!;
+    const entry = manifests[i];
+    if (!entry) throw new Error("Unexpected: manifest entry missing");
     if (result.status === "fulfilled") {
       return {
         status: "fulfilled" as const,

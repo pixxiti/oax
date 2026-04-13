@@ -71,7 +71,15 @@ export interface Config {
 // ─── Default options ────────────────────────────────────────────────────────
 
 export const DEFAULT_BUILD_OPTIONS: Required<
-  Pick<BuildOptions, "strictObjects" | "additionalPropsDefault" | "mediaTypeExpr" | "zodVersion" | "outputDir" | "outputFile">
+  Pick<
+    BuildOptions,
+    | "strictObjects"
+    | "additionalPropsDefault"
+    | "mediaTypeExpr"
+    | "zodVersion"
+    | "outputDir"
+    | "outputFile"
+  >
 > = {
   strictObjects: true,
   additionalPropsDefault: false,
@@ -129,7 +137,7 @@ export function defineConfig(input: ConfigInput): Config {
  * ```
  */
 export function defineManifest(
-  input: ManifestInput | ((ctx: ManifestContext) => ManifestInput),
+  input: ManifestInput | ((ctx: ManifestContext) => ManifestInput)
 ): Manifest {
   return { __type: "oax-manifest", input };
 }
@@ -142,7 +150,7 @@ export function defineManifest(
  */
 export function resolveManifest(
   manifest: Manifest,
-  configSources: Record<string, Source>,
+  configSources: Record<string, Source>
 ): ManifestInput {
   if (typeof manifest.input === "function") {
     return manifest.input({ sources: configSources });

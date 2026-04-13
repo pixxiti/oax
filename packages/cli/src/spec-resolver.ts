@@ -47,7 +47,7 @@ function readSpec(filePath: string): OpenAPISpec {
 function writeSpecToTemp(spec: OpenAPISpec, tmpDir: string): string {
   const tmpFile = path.join(
     tmpDir,
-    `oax-spec-${Date.now()}-${Math.random().toString(36).slice(2)}.json`,
+    `oax-spec-${Date.now()}-${Math.random().toString(36).slice(2)}.json`
   );
   fs.writeFileSync(tmpFile, JSON.stringify(spec, null, 2));
   return tmpFile;
@@ -79,12 +79,13 @@ function collectRefs(obj: unknown): Set<string> {
 
 function resolveTransitiveRefs(
   components: Record<string, Record<string, unknown>> | undefined,
-  initialRefs: Set<string>,
+  initialRefs: Set<string>
 ): Set<string> {
   const all = new Set(initialRefs);
   const queue = [...initialRefs];
   while (queue.length > 0) {
-    const ref = queue.pop()!;
+    const ref = queue.pop();
+    if (!ref) continue;
     const match = ref.match(/^#\/components\/(\w+)\/(.+)$/);
     if (!match || !components) continue;
     const section = match[1];
@@ -114,7 +115,7 @@ const HTTP_METHODS = ["get", "post", "put", "patch", "delete", "options", "head"
 export function filterSpec(
   specPath: string,
   filter: (operationId: string) => boolean,
-  tmpDir: string,
+  tmpDir: string
 ): string {
   const spec = readSpec(specPath);
   const filteredPaths: Record<string, Record<string, unknown>> = {};
@@ -159,15 +160,12 @@ export function filterSpec(
     }
   }
 
+  const { components: _omit, ...specWithoutComponents } = spec;
   const filtered: OpenAPISpec = {
-    ...spec,
+    ...specWithoutComponents,
     paths: filteredPaths,
+    ...(Object.keys(filteredComponents).length > 0 ? { components: filteredComponents } : {}),
   };
-  if (Object.keys(filteredComponents).length > 0) {
-    filtered.components = filteredComponents;
-  } else {
-    delete filtered.components;
-  }
 
   return writeSpecToTemp(filtered, tmpDir);
 }
@@ -181,7 +179,7 @@ export function filterSpec(
  */
 export function mergeSpecs(
   sources: Array<Pick<Source, "path" | "filter">>,
-  tmpDir: string,
+  tmpDir: string
 ): string {
   const mergedPaths: Record<string, Record<string, unknown>> = {};
   const mergedComponents: Record<string, Record<string, unknown>> = {};
@@ -225,15 +223,12 @@ export function mergeSpecs(
     }
   }
 
+  const { components: _omitComponents, ...baseSpecWithoutComponents } = baseSpec ?? {};
   const merged: OpenAPISpec = {
-    ...baseSpec,
+    ...baseSpecWithoutComponents,
     paths: mergedPaths,
+    ...(Object.keys(mergedComponents).length > 0 ? { components: mergedComponents } : {}),
   };
-  if (Object.keys(mergedComponents).length > 0) {
-    merged.components = mergedComponents;
-  } else {
-    delete merged.components;
-  }
 
   return writeSpecToTemp(merged, tmpDir);
 }

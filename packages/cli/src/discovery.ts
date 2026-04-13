@@ -53,9 +53,7 @@ export async function loadManifest(filePath: string): Promise<Manifest> {
   const manifest = mod.default ?? mod;
 
   if (!manifest || manifest.__type !== "oax-manifest") {
-    throw new Error(
-      `Invalid manifest at ${filePath}. Did you use defineManifest()?`,
-    );
+    throw new Error(`Invalid manifest at ${filePath}. Did you use defineManifest()?`);
   }
 
   return manifest as Manifest;
