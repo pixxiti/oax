@@ -56,7 +56,7 @@ type MutateBodyVariables<T extends Operations, K extends keyof T> = BodyById<
   T,
   K
 > extends never
-  ? void
+  ? undefined
   : BodyById<T, K>;
 
 // Define separate interfaces for query and mutation hooks
@@ -231,8 +231,8 @@ export function createHooks<const T extends Operations>(
         const hasBody = typedOperation.requestBody;
 
         // Determine if called with pre-bound inputs (2-arg pattern) or just options (1-arg pattern)
-        let preBoundInputs: any = undefined;
-        let mutationOptions: any = undefined;
+        let preBoundInputs: any;
+        let mutationOptions: any;
 
         if (secondArg !== undefined) {
           // 2-arg: (inputs, options)
@@ -250,34 +250,30 @@ export function createHooks<const T extends Operations>(
           mutationOptions = firstArg;
         }
 
-        if (preBoundInputs) {
-          // Pre-bound pattern: inputs captured at hook time, mutate() receives only body
-          const inputs = {
-            params: preBoundInputs.params,
-            queries: preBoundInputs.queries,
-            headers: preBoundInputs.headers,
-          };
+        // Single useMutation call — mutationFn branches on whether inputs were pre-bound
+        return useMutation({
+          mutationFn: async (variables: any) => {
+            if (preBoundInputs) {
+              // Pre-bound pattern: variables is just the body (or undefined for bodyless ops)
+              const inputs = {
+                params: preBoundInputs.params,
+                queries: preBoundInputs.queries,
+                headers: preBoundInputs.headers,
+              };
 
-          return useMutation({
-            mutationFn: async (body: any) => {
               if (hasInputs && hasBody) {
-                return client[operationId](inputs, body);
+                return client[operationId](inputs, variables);
               }
               if (hasInputs) {
                 return client[operationId](inputs);
               }
               if (hasBody) {
-                return client[operationId](undefined, body);
+                return client[operationId](undefined, variables);
               }
               return client[operationId]();
-            },
-            ...mutationOptions,
-          });
-        }
+            }
 
-        // Non-pre-bound pattern: mutate() receives full MutationParams
-        return useMutation({
-          mutationFn: async (variables: MutationParams<T, any>) => {
+            // Non-pre-bound pattern: variables is full MutationParams
             if (!variables) {
               return client[operationId]();
             }
