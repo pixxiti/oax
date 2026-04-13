@@ -1,8 +1,8 @@
 /**
- * Public API for @oax/cli.
+ * Public API for @pixxiti/oax-cli.
  *
  * Usage:
- *   import { defineConfig, defineManifest } from "@oax/cli";
+ *   import { defineConfig, defineManifest } from "@pixxiti/oax-cli";
  */
 export {
   defineConfig,

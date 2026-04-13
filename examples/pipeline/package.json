@@ -1,5 +1,5 @@
 {
-  "name": "@oax/example-pipeline",
+  "name": "@pixxiti/example-pipeline",
   "version": "1.0.0",
   "description": "Example pipeline configuration for OAX",
   "type": "module",
@@ -12,7 +12,7 @@
     "format": "biome format --write ."
   },
   "dependencies": {
-    "@oax/core": "workspace:*",
+    "@pixxiti/oax-core": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "ky": "^1.9.0",
     "zod": "^4.1.3"

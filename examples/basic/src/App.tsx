@@ -1,4 +1,4 @@
-import { createClient } from "@oax/core";
+import { createClient } from "@pixxiti/oax-core";
 import { useCallback, useEffect, useState } from "react";
 import type { z } from "zod/v4";
 import { operations, type schemas } from "./api/client";

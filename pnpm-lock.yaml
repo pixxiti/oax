@@ -23,7 +23,7 @@ importers:
 
   examples/basic:
     dependencies:
-      '@oax/core':
+      '@pixxiti/oax-core':
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -54,10 +54,10 @@ importers:
 
   examples/hooks:
     dependencies:
-      '@oax/core':
+      '@pixxiti/oax-core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@oax/hooks':
+      '@pixxiti/oax-hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
       '@tanstack/react-query':
@@ -94,7 +94,7 @@ importers:
 
   examples/pipeline:
     dependencies:
-      '@oax/core':
+      '@pixxiti/oax-core':
         specifier: workspace:*
         version: link:../../packages/core
       '@tanstack/react-query':
@@ -157,8 +157,8 @@ importers:
   packages/core:
     dependencies:
       ky:
-        specifier: ^1.9.0
-        version: 1.9.0
+        specifier: ^2.0.0
+        version: 2.0.0
     devDependencies:
       '@types/node':
         specifier: ^22.18.0
@@ -175,7 +175,7 @@ importers:
 
   packages/hooks:
     dependencies:
-      '@oax/core':
+      '@pixxiti/oax-core':
         specifier: workspace:*
         version: link:../core
       '@tanstack/react-query':
@@ -1081,6 +1081,10 @@ packages:
   ky@1.9.0:
     resolution: {integrity: sha512-NgBeR/cu7kuC4BAeF1rnXhfoI2uQ9RBe8zl5vo87ASsf1iIQoCeOxyt6Io6K4Ki++5ItCavXAtbEWWCGFciQ6g==}
     engines: {node: '>=18'}
+
+  ky@2.0.0:
+    resolution: {integrity: sha512-KzI4Vz5AbZFAUFYGx28PCSfFWUo6/qj9Br/P6KRwDieE1xfdz0tIONepJcLw/1xLocN13GgvfJGasa+pfSkbHg==}
+    engines: {node: '>=22'}
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
@@ -2180,6 +2184,8 @@ snapshots:
   json5@2.2.3: {}
 
   ky@1.9.0: {}
+
+  ky@2.0.0: {}
 
   loose-envify@1.4.0:
     dependencies:

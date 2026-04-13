@@ -61,7 +61,7 @@ export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
   const schemasObjectCode = generateSchemasObject(allSchemas);
   const operationsCode = generateOperationsCode(operations, schemaNames);
   const code = `import { z } from 'zod';
-import { createClient as createRuntimeClient, type ClientOptions } from '@oax/core';
+import { createClient as createRuntimeClient, type ClientOptions } from '@pixxiti/oax-core';
 
 ${schemaCode}
 

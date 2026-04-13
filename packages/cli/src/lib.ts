@@ -1,8 +1,8 @@
 /**
- * Programmatic API for @oax/cli.
+ * Programmatic API for @pixxiti/oax-cli.
  *
  * Usage:
- *   import { parseOAS, generateSchemasFile } from "@oax/cli/lib";
+ *   import { parseOAS, generateSchemasFile } from "@pixxiti/oax-cli/lib";
  *
  *   const oas = await parseOAS("path/to/openapi.yaml");
  *   const code = await generateSchemasFile(oas, { zodVersion: 3 });

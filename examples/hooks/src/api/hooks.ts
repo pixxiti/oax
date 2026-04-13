@@ -1,4 +1,4 @@
-import { createHooks } from "@oax/hooks";
+import { createHooks } from "@pixxiti/oax-hooks";
 
 import { createClient } from "./client";
 

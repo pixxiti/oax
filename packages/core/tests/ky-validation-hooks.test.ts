@@ -71,7 +71,7 @@ describe("createKyValidationHooks", () => {
       });
 
       mockOptions = {
-        inputs: { params: { type: "dog" } },
+        context: { inputs: { params: { type: "dog" } } },
         json: {
           name: "John Doe",
           email: "john@example.com",
@@ -86,7 +86,7 @@ describe("createKyValidationHooks", () => {
     });
 
     it("should validate request parameters and throw ValidationError on failure", () => {
-      mockOptions.inputs = { params: { id: "" } }; // fails validation
+      mockOptions.context = { inputs: { params: { id: "" } } }; // fails validation
 
       expect(() => {
         hooks.beforeRequest(mockRequest, mockOptions, mockOperation);
@@ -366,7 +366,7 @@ describe("createKyValidationHooks", () => {
       });
 
       const mockOptions = {
-        inputs: { params: { type: "" } }, // fails validation
+        context: { inputs: { params: { type: "" } } }, // fails validation
         json: {
           name: "John Doe",
           email: "john@example.com",

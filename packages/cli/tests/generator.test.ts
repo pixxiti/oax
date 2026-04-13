@@ -35,7 +35,7 @@ describe("oax generator", () => {
       expect(clientCode).toContain('import { z } from "zod"');
       expect(clientCode).toContain("createClient as createRuntimeClient");
       expect(clientCode).toContain("type ClientOptions");
-      expect(clientCode).toContain("@oax/core");
+      expect(clientCode).toContain("@pixxiti/oax-core");
     });
 
     it("should generate schema exports", () => {

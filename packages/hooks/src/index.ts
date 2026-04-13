@@ -15,7 +15,7 @@ import type {
   QueriesById,
   ResponseById,
   ValidationError,
-} from "@oax/core";
+} from "@pixxiti/oax-core";
 
 export interface HooksOptions {
   apiName: string;

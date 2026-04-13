@@ -15,8 +15,8 @@
     "generate": "node ../../packages/cli/dist/index.js generate -i https://petstore3.swagger.io/api/v3/openapi.json -o src/api/client.ts"
   },
   "dependencies": {
-    "@oax/core": "workspace:*",
-    "@oax/hooks": "workspace:*",
+    "@pixxiti/oax-core": "workspace:*",
+    "@pixxiti/oax-hooks": "workspace:*",
     "@tanstack/react-query": "^5.85.5",
     "@tanstack/react-query-devtools": "^5.85.5",
     "react": "^19.1.1",

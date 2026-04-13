@@ -1,5 +1,5 @@
 {
-  "name": "@oax/hooks",
+  "name": "@pixxiti/oax-hooks",
   "version": "1.0.0",
   "description": "React Query v5 hooks for oax API clients",
   "type": "module",
@@ -19,11 +19,14 @@
     "lint": "biome lint .",
     "format": "biome format --write ."
   },
+  "files": [
+    "dist"
+  ],
   "keywords": ["react-query", "hooks", "openapi", "zod", "typescript"],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@oax/core": "workspace:*",
+    "@pixxiti/oax-core": "workspace:*",
     "@tanstack/react-query": "^5.85.5",
     "zod": "^4.1.3"
   },

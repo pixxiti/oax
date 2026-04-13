@@ -2,7 +2,7 @@ import { z } from "zod";
 import {
   createClient as createRuntimeClient,
   type ClientOptions,
-} from "@oax/core";
+} from "@pixxiti/oax-core";
 
 export const Order = z.object({
   id: z.number().int().optional(),

@@ -1,4 +1,4 @@
-import type { Operations } from "@oax/core";
+import type { Operations } from "@pixxiti/oax-core";
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createHooks, generateQueryKey } from "../src/index";

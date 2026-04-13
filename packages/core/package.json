@@ -1,5 +1,5 @@
 {
-  "name": "@oax/core",
+  "name": "@pixxiti/oax-core",
   "version": "1.0.0",
   "description": "Runtime API client wrapper for generated oax clients",
   "type": "module",
@@ -26,7 +26,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "ky": "^1.9.0"
+    "ky": "^2.0.0"
   },
   "peerDependencies": {
     "zod": "^4.1.3"
@@ -37,6 +37,9 @@
     "vitest": "^2.1.9",
     "zod": "^4.1.3"
   },
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=18.0.0"
   }

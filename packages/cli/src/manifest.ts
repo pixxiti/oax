@@ -96,7 +96,7 @@ export const DEFAULT_BUILD_OPTIONS: Required<
  *
  * @example
  * ```ts
- * import { defineConfig } from "@oax/cli";
+ * import { defineConfig } from "@pixxiti/oax-cli";
  *
  * export default defineConfig({
  *   sources: {

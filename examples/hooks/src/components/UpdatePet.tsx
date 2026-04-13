@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import type { ParamsById, ResponseById } from "@oax/core";
+import type { ParamsById, ResponseById } from "@pixxiti/oax-core";
 import type React from "react";
 import { useState } from "react";
 import type { operations } from "../api/client";

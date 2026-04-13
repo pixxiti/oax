@@ -1,5 +1,5 @@
 {
-  "name": "@oax/cli",
+  "name": "@pixxiti/oax-cli",
   "version": "1.0.0",
   "description": "CLI tool for generating typed API clients from OpenAPI specifications",
   "type": "module",
@@ -47,6 +47,9 @@
     "typescript": "^5.9.2",
     "vitest": "^2.1.9"
   },
+  "files": [
+    "dist"
+  ],
   "engines": {
     "node": ">=18.0.0"
   }

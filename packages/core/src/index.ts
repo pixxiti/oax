@@ -207,8 +207,8 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
         return request;
 
       try {
-        if ((options as any).inputs) {
-          helpers.validateRequestParams((options as any).inputs, operation);
+        if ((options as any).context?.inputs) {
+          helpers.validateRequestParams((options as any).context.inputs, operation);
         }
 
         const contentType = request.headers.get("content-type");
@@ -436,7 +436,7 @@ export class ApiClient {
 
     if (!shouldValidate) {
       this.ky = ky.create({
-        prefixUrl: baseUrl,
+        prefix: baseUrl,
         ...kyOptions,
         hooks: {
           ...kyOptions.hooks,
@@ -449,20 +449,20 @@ export class ApiClient {
     const hooks = createKyValidationHooks(this.validationHelpers);
 
     this.ky = ky.create({
-      prefixUrl: baseUrl,
+      prefix: baseUrl,
       ...kyOptions,
       hooks: {
         ...kyOptions.hooks,
         beforeRequest: [
-          (request, options) => {
-            const operation = (options as any).operation as Operation;
+          ({ request, options }: { request: Request; options: NormalizedOptions }) => {
+            const operation = options.context.operation as Operation;
             return hooks.beforeRequest?.(request, options, operation) ?? request;
           },
           ...(kyOptions?.hooks?.beforeRequest ?? []),
         ],
         afterResponse: [
-          (request, options, response) => {
-            const operation = (options as any).operation as Operation;
+          ({ request, options, response }: { request: Request; options: NormalizedOptions; response: Response }) => {
+            const operation = options.context.operation as Operation;
             return hooks.afterResponse?.(request, options, response, operation) ?? response;
           },
           ...(kyOptions?.hooks?.afterResponse ?? []),
@@ -485,7 +485,7 @@ export class ApiClient {
       throw new Error(`Operation ${operationId} not found`);
     }
 
-    // Remove leading slash for ky prefixUrl compatibility
+    // Remove leading slash for ky prefix compatibility
     let url = operation.path.startsWith("/") ? operation.path.slice(1) : operation.path;
     const searchParams = new URLSearchParams();
     const headers: Record<string, string> = {};
@@ -522,8 +522,7 @@ export class ApiClient {
       method: operation.method.toUpperCase(),
       headers,
       searchParams,
-      operation, // Pass operation to hooks
-      inputs, // Pass params for validation
+      context: { operation, inputs },
     };
 
     if (body && operation.requestBody) {

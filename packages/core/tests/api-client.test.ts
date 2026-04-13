@@ -137,7 +137,7 @@ describe("ApiClient", () => {
       new ApiClient("https://api.example.com", mockOperations);
 
       expect(ky.default.create).toHaveBeenCalledWith({
-        prefixUrl: "https://api.example.com",
+        prefix: "https://api.example.com",
         hooks: {
           beforeRequest: expect.any(Array),
           afterResponse: expect.any(Array),

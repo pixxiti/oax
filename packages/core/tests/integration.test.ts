@@ -37,7 +37,7 @@ vi.mock("ky", () => {
     currentHooks = config.hooks;
 
     const instanceKy = vi.fn().mockImplementation(async (url: string, options: any) => {
-      // Simulate beforeRequest hooks
+      // Simulate beforeRequest hooks (ky v2 state-object style)
       if (currentHooks?.beforeRequest) {
         const request = new Request(`https://example.com/${url}`, {
           method: options.method || "GET",
@@ -46,22 +46,36 @@ vi.mock("ky", () => {
         });
 
         for (const hook of currentHooks.beforeRequest) {
-          hook(request, options);
+          hook({ request, options, retryCount: 0 });
         }
       }
 
-      // Check if mockKy has been overridden for this test
+      // Get the response
+      let response;
       if (mockKy.getMockImplementation()) {
-        return mockKy(url, options);
+        response = await mockKy(url, options);
+      } else {
+        response = {
+          json: vi.fn().mockResolvedValue({}),
+          text: vi.fn().mockResolvedValue(""),
+          status: 200,
+          headers: new Map([["content-type", "application/json"]]),
+        };
       }
 
-      // Return default response - individual tests will override this
-      return {
-        json: vi.fn().mockResolvedValue({}),
-        text: vi.fn().mockResolvedValue(""),
-        status: 200,
-        headers: new Map([["content-type", "application/json"]]),
-      };
+      // Simulate afterResponse hooks (ky v2 state-object style)
+      if (currentHooks?.afterResponse) {
+        const request = new Request(`https://example.com/${url}`, {
+          method: options.method || "GET",
+        });
+
+        for (const hook of currentHooks.afterResponse) {
+          const result = await hook({ request, options, response, retryCount: 0 });
+          if (result) response = result;
+        }
+      }
+
+      return response;
     });
 
     return instanceKy;
@@ -74,6 +88,13 @@ vi.mock("ky", () => {
     HTTPError: MockHTTPError,
   };
 });
+
+function createMockResponse(data: unknown, status = 200): Response {
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+}
 
 describe("Integration Tests", () => {
   let consoleSpy: any;
@@ -206,13 +227,7 @@ describe("Integration Tests", () => {
         status: "available" as const,
       };
 
-      const mockResponse = {
-        json: vi.fn().mockResolvedValue(mockPetData),
-        headers: new Map([["content-type", "application/json"]]),
-        status: 200,
-      };
-
-      (ky.default as any).mockResolvedValue(mockResponse);
+      (ky.default as any).mockResolvedValue(createMockResponse(mockPetData));
 
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
@@ -276,13 +291,7 @@ describe("Integration Tests", () => {
         photoUrls: ["url1"],
       };
 
-      const mockResponse = {
-        json: vi.fn().mockResolvedValue(invalidResponseData),
-        headers: new Map([["content-type", "application/json"]]),
-        status: 200,
-      };
-
-      (ky.default as any).mockResolvedValue(mockResponse);
+      (ky.default as any).mockResolvedValue(createMockResponse(invalidResponseData));
 
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
@@ -306,13 +315,7 @@ describe("Integration Tests", () => {
         photoUrls: "not-an-array",
       };
 
-      const mockResponse = {
-        json: vi.fn().mockResolvedValue(invalidData),
-        headers: new Map([["content-type", "application/json"]]),
-        status: 200,
-      };
-
-      (ky.default as any).mockResolvedValue(mockResponse);
+      (ky.default as any).mockResolvedValue(createMockResponse(invalidData));
 
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations, {
         validate: false,
@@ -327,14 +330,7 @@ describe("Integration Tests", () => {
 
     it("should handle complex parameter combinations", async () => {
       const ky = await import("ky");
-      const mockResponse = {
-        json: vi.fn(),
-        text: vi.fn(),
-        headers: new Map([["content-type", "application/json"]]),
-        status: 200,
-      };
-
-      (ky.default as any).mockResolvedValue(mockResponse);
+      (ky.default as any).mockResolvedValue(createMockResponse({}));
 
       const client = createClient("https://petstore.swagger.io/v2", petStoreOperations);
 
@@ -439,13 +435,7 @@ describe("Integration Tests", () => {
       };
 
       const ky = await import("ky");
-      const mockResponse = {
-        json: vi.fn().mockResolvedValue("simple response"),
-        headers: new Map([["content-type", "application/json"]]),
-        status: 200,
-      };
-
-      (ky.default as any).mockResolvedValue(mockResponse);
+      (ky.default as any).mockResolvedValue(createMockResponse("simple response"));
 
       const client = createClient("https://example.com", { simple: simpleOperation });
 
@@ -471,14 +461,9 @@ describe("Integration Tests", () => {
       } as const;
 
       const ky = await import("ky");
-      const mockResponse = {
-        json: vi.fn(),
-        text: vi.fn(),
-        headers: new Map([["content-type", "application/json"]]),
+      (ky.default as any).mockResolvedValue(new Response(null, {
         status: 204,
-      };
-
-      (ky.default as any).mockResolvedValue(mockResponse);
+      }));
 
       const client = createClient("https://example.com", { noSchema: noSchemaOperation });
 

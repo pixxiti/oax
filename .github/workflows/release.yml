@@ -1,15 +1,16 @@
-name: Release and Publish
+name: Release
 
 on:
   push:
-    branches: [master]
+    tags:
+      - '@pixxiti/*@*'
 
 jobs:
-  release:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
+      packages: write
 
     steps:
       - name: Checkout
@@ -24,7 +25,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
+          registry-url: 'https://npm.pkg.github.com'
           cache: 'pnpm'
+
+      - name: Extract package info from tag
+        id: tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          # Tag format: @pixxiti/core@1.0.0
+          PACKAGE=$(echo "$TAG" | sed 's/@[^@]*$//')
+          VERSION=$(echo "$TAG" | sed 's/.*@//')
+          echo "package=$PACKAGE" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing $PACKAGE@$VERSION"
 
       - name: Install dependencies
         run: pnpm install
@@ -32,5 +45,9 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Publish packages
-        run: pnpm dlx pkg-pr-new publish 'packages/*'
+      - name: Publish package
+        run: |
+          PACKAGE="${{ steps.tag.outputs.package }}"
+          pnpm --filter "$PACKAGE" publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
