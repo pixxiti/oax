@@ -64,5 +64,5 @@ test-results/
 *.temp
 .cache/
 
-# Docs
-docs/
+# Superpowers docs
+docs/superpowers/
