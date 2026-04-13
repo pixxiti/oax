@@ -1,5 +1,3 @@
-[![pkg.pr.new](https://pkg.pr.new/badge/pixxiti/oax)](https://pkg.pr.new/~/pixxiti/oax)
-
 # oax
 
 **Open API Spec validation and client generation tooling for Typescript**
