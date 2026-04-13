@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-02-19T20:28:25.342Z
+// Generated on: 2026-04-13T17:56:06.854Z
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type {
@@ -9,19 +9,13 @@ import type {
 import type { HTTPError } from "ky";
 import type { z } from "zod";
 import { listPets, createPet, getPetById } from "./client";
-import type { operations, NewPet } from "./schemas";
+import type { operations } from "./schemas";
 import { listPetsQueryKey, getPetByIdQueryKey } from "./querykeys";
 
 export function useListPets(
   params?: undefined,
-  queries?: z.infer<typeof operations.listPets.queries>,
-  options?: Omit<
-    UseQueryOptions<
-      z.infer<(typeof operations.listPets.responses)["200"]["schema"]>,
-      HTTPError
-    >,
-    "queryKey" | "queryFn"
-  >,
+  queries?: any,
+  options?: Omit<UseQueryOptions<unknown, HTTPError>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: listPetsQueryKey(params, queries),
@@ -31,27 +25,17 @@ export function useListPets(
 }
 
 export function useCreatePet(
-  options?: UseMutationOptions<
-    z.infer<(typeof operations.createPet.responses)["201"]["schema"]>,
-    HTTPError,
-    z.infer<typeof NewPet>
-  >,
+  options?: UseMutationOptions<unknown, HTTPError, any>,
 ) {
   return useMutation({
-    mutationFn: (data: z.infer<typeof NewPet>) => createPet(data),
+    mutationFn: (data: any) => createPet(data),
     ...options,
   });
 }
 
 export function useGetPetById(
-  params: z.infer<typeof operations.getPetById.params>,
-  options?: Omit<
-    UseQueryOptions<
-      z.infer<(typeof operations.getPetById.responses)["200"]["schema"]>,
-      HTTPError
-    >,
-    "queryKey" | "queryFn"
-  >,
+  params: any,
+  options?: Omit<UseQueryOptions<unknown, HTTPError>, "queryKey" | "queryFn">,
 ) {
   return useQuery({
     queryKey: getPetByIdQueryKey(params),

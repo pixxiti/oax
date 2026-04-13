@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-02-19T20:28:25.296Z
+// Generated on: 2026-04-13T17:56:06.809Z
 
 import { z } from "zod";
 
@@ -23,10 +23,10 @@ export const operations = {
     operationId: "listPets",
     summary: `List all pets`,
     description: undefined,
-    params: z.object({}),
-    queries: z.object({ limit: z.number().int().optional() }),
-    headers: z.object({}),
 
+    queries: z.object({ limit: z.number().int().optional() }),
+
+    response: z.array(Pet),
     responses: {
       "200": {
         description: `A paged array of pets`,
@@ -40,10 +40,9 @@ export const operations = {
     operationId: "createPet",
     summary: `Create a pet`,
     description: undefined,
-    params: z.object({}),
-    queries: z.object({}),
-    headers: z.object({}),
+
     requestBody: { schema: NewPet, required: true },
+    response: Pet,
     responses: {
       "201": {
         description: `Pet created`,
@@ -58,9 +57,8 @@ export const operations = {
     summary: `Info for a specific pet`,
     description: undefined,
     params: z.object({ petId: z.string() }),
-    queries: z.object({}),
-    headers: z.object({}),
 
+    response: Pet,
     responses: {
       "200": {
         description: `Expected response to a valid request`,
