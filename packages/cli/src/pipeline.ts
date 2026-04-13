@@ -173,7 +173,7 @@ export async function loadPipelineConfig(configPath = "oax.config.ts"): Promise<
     const module = await import(fullPath);
     const config: PipelineConfig = module.default || module;
 
-    if (!config || !config.steps) {
+    if (!config?.steps) {
       throw new Error(
         `Invalid config format. Config must export a default configuration with 'steps' array.`
       );

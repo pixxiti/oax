@@ -9,7 +9,7 @@ export function listPetsQueryKey(
 ): readonly ["listPets", undefined, { limit?: any }];
 
 export function listPetsQueryKey(
-  params?: undefined,
+  _params?: undefined,
   queries?: { limit?: any },
 ) {
   if (queries !== undefined) {

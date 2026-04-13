@@ -90,10 +90,6 @@ function resolveResponse(
   return response as OpenAPIV3.ResponseObject;
 }
 
-function escapeStringLiteral(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
-}
-
 function collectSchemaDefaults(oas: OpenAPIV3.Document): Map<string, unknown> {
   const defaults = new Map<string, unknown>();
   if (!oas.components?.schemas) return defaults;

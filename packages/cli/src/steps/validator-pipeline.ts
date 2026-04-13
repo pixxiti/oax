@@ -277,7 +277,7 @@ function createValidationHooks() {
           // Other validation errors - return response gracefully
           return response;
         }
-      } catch (jsonError) {
+      } catch {
         // JSON parsing error - return response gracefully without logging
         return response;
       }

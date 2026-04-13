@@ -100,7 +100,6 @@ describe("createKyValidationHooks", () => {
         name: "", // fails min(1) validation
         email: "invalid-email", // fails email validation
       };
-      // biome-ignore lint/performance/noDelete: testing
       delete mockOptions.body; // Use json instead of body for ky
 
       expect(() => {

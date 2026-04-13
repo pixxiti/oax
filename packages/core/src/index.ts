@@ -1,7 +1,5 @@
 import ky, {
-  type Hooks,
   type Options,
-  type BeforeErrorHook,
   type HTTPError,
   type NormalizedOptions,
 } from "ky";
@@ -226,7 +224,7 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
       return request;
     },
 
-    afterResponse: async (request, options, response, operation) => {
+    afterResponse: async (_request, _options, response, operation) => {
       if (!operation || !helpers.validateResponseData) return response;
 
       const contentType = response.headers.get("content-type");
@@ -244,7 +242,7 @@ export function createKyValidationHooks(helpers: ValidationHelpers): KyValidatio
             // Other validation errors - return response gracefully
             return response;
           }
-        } catch (jsonError) {
+        } catch {
           // JSON parsing error - return response gracefully without logging
           return response;
         }

@@ -23,9 +23,9 @@ vi.mock("ky", async () => {
   };
 
   const mockKy = vi.fn().mockResolvedValue(mockResponse);
-  // @ts-ignore - we are mocking the create method
+  // @ts-expect-error - we are mocking the create method
   mockKy.create = vi.fn().mockReturnValue(mockKy);
-  // @ts-ignore - we are mocking the extend method
+  // @ts-expect-error - we are mocking the extend method
   mockKy.extend = vi.fn().mockReturnValue(mockKy);
 
   return {

@@ -67,11 +67,11 @@ export const PetDetail = ({
             <div>
               <strong>Photos:</strong>
               <div className="photos">
-                {pet.photoUrls.map((url, index) => (
+                {pet.photoUrls.map((url) => (
                   <img
-                    key={`${pet.id}-photo-${index}`}
+                    key={`${pet.id}-${url}`}
                     src={url}
-                    alt={`${pet.name} ${index + 1}`}
+                    alt={pet.name}
                     className="pet-photo"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";

@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T20:32:40.638Z
+// Generated on: 2026-04-13T20:37:59.377Z
 
 import type ky from "ky";
 import type { BeforeRequestHook, AfterResponseHook } from "ky";
@@ -297,7 +297,7 @@ function createValidationHooks() {
           // Other validation errors - return response gracefully
           return response;
         }
-      } catch (jsonError) {
+      } catch {
         // JSON parsing error - return response gracefully without logging
         return response;
       }

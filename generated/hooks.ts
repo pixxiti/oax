@@ -1,7 +1,7 @@
 // This file is auto-generated using oax. Do not edit manually.
 // Generated on: 2025-09-03T04:37:23.121Z
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import type {
   UseMutationOptions,
   UseQueryOptions,

@@ -14,7 +14,6 @@ import type {
   ParamsById,
   QueriesById,
   ResponseById,
-  ValidationError,
 } from "@pixxiti/oax-core";
 
 export interface HooksOptions {

@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { type GenerateOptions, generate } from "../src/generate";
+import { generate } from "../src/generate";
 import { defineConfig, defineManifest } from "../src/manifest";
 
 const fixturesDir = path.resolve(__dirname, "fixtures");
