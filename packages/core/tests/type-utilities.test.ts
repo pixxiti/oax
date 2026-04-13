@@ -50,20 +50,17 @@ const testOperations = {
     queries: z.object({
       source: z.string().optional(),
     }),
-    requestBody: {
-      schema: z.object({
-        name: z.string().min(1),
-        email: z.email(),
-        age: z.number().int().min(0),
-        profile: z
-          .object({
-            bio: z.string().optional(),
-            avatar: z.url().optional(),
-          })
-          .optional(),
-      }),
-      required: true,
-    },
+    requestBody: z.object({
+      name: z.string().min(1),
+      email: z.email(),
+      age: z.number().int().min(0),
+      profile: z
+        .object({
+          bio: z.string().optional(),
+          avatar: z.url().optional(),
+        })
+        .optional(),
+    }),
     responses: {
       "201": {
         description: "Created",
@@ -103,14 +100,11 @@ const testOperations = {
       userId: z.uuid(),
       validate: z.boolean().optional(),
     }),
-    requestBody: {
-      schema: z.object({
-        name: z.string().min(1).optional(),
-        email: z.email().optional(),
-        age: z.number().int().min(0).optional(),
-      }),
-      required: false,
-    },
+    requestBody: z.object({
+      name: z.string().min(1).optional(),
+      email: z.email().optional(),
+      age: z.number().int().min(0).optional(),
+    }),
     responses: {
       "200": {
         description: "Updated",
@@ -551,25 +545,22 @@ describe("Type Utilities", () => {
               level2: z.array(z.string()),
             }),
           }),
-          requestBody: {
-            schema: z.discriminatedUnion("type", [
-              z.object({
-                type: z.literal("user"),
-                userData: z.object({
-                  name: z.string(),
-                  age: z.number(),
-                }),
+          requestBody: z.discriminatedUnion("type", [
+            z.object({
+              type: z.literal("user"),
+              userData: z.object({
+                name: z.string(),
+                age: z.number(),
               }),
-              z.object({
-                type: z.literal("admin"),
-                adminData: z.object({
-                  permissions: z.array(z.string()),
-                  role: z.enum(["super", "normal"]),
-                }),
+            }),
+            z.object({
+              type: z.literal("admin"),
+              adminData: z.object({
+                permissions: z.array(z.string()),
+                role: z.enum(["super", "normal"]),
               }),
-            ]),
-            required: true,
-          },
+            }),
+          ]),
           responses: {
             "200": {
               description: "Success",

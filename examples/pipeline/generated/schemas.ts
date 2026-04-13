@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T21:00:46.175Z
+// Generated on: 2026-04-13T21:44:48.293Z
 
 import { z } from "zod";
 
@@ -41,7 +41,7 @@ export const operations = {
     summary: "Create a pet",
     description: undefined,
 
-    requestBody: { schema: NewPet, required: true },
+    requestBody: NewPet,
     response: Pet,
     responses: {
       "201": {

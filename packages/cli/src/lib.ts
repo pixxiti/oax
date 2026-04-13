@@ -34,7 +34,6 @@ interface ZodSchemaInfo {
 
 interface SchemaReference {
   zodCode: string;
-  required: boolean;
 }
 
 interface ParameterInfo {
@@ -240,7 +239,7 @@ function generateOperations(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
         name: p.name,
         in: p.in as ParameterInfo["in"],
         required: p.required || false,
-        schema: { zodCode: generateZodCode(p.schema, options), required: p.required || false },
+        schema: { zodCode: generateZodCode(p.schema, options) },
       }));
 
       let requestBody: SchemaReference | undefined;
@@ -258,7 +257,6 @@ function generateOperations(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
           if (entry?.[1]?.schema) {
             requestBody = {
               zodCode: generateZodCode(entry[1].schema, options),
-              required: resolvedBody.required || false,
             };
           }
         }
@@ -281,7 +279,6 @@ function generateOperations(oas: OpenAPIV3.Document, options: ZodCodegenOptions)
             if (entry?.[1]?.schema) {
               responseInfo.schema = {
                 zodCode: generateZodCode(entry[1].schema, options),
-                required: true,
               };
             }
           }

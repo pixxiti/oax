@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T21:00:46.209Z
+// Generated on: 2026-04-13T21:44:48.328Z
 
 import type ky from "ky";
 import type { BeforeRequestHook, AfterResponseHook } from "ky";
@@ -145,15 +145,11 @@ export function createValidationHelpers(): ValidationHelpers {
     },
 
     validateRequestBody: (body: unknown, operation: Operation) => {
-      if (
-        !body ||
-        !("requestBody" in operation) ||
-        !operation.requestBody?.schema
-      ) {
+      if (!body || !operation.requestBody) {
         return body;
       }
 
-      const schema = operation.requestBody.schema;
+      const schema = operation.requestBody;
       if (typeof schema === "object" && "safeParse" in schema) {
         const result = (schema as ZodType).safeParse(body);
         if (!result.success) {

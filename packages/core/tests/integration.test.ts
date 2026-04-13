@@ -151,29 +151,26 @@ describe("Integration Tests", () => {
       params: z.object({}),
       queries: z.object({}),
       headers: z.object({}),
-      requestBody: {
-        schema: z.object({
-          id: z.number().int().positive().optional(),
-          category: z
-            .object({
+      requestBody: z.object({
+        id: z.number().int().positive().optional(),
+        category: z
+          .object({
+            id: z.number().int().positive(),
+            name: z.string(),
+          })
+          .optional(),
+        name: z.string().min(1),
+        photoUrls: z.array(z.string()),
+        tags: z
+          .array(
+            z.object({
               id: z.number().int().positive(),
               name: z.string(),
             })
-            .optional(),
-          name: z.string().min(1),
-          photoUrls: z.array(z.string()),
-          tags: z
-            .array(
-              z.object({
-                id: z.number().int().positive(),
-                name: z.string(),
-              })
-            )
-            .optional(),
-          status: z.enum(["available", "pending", "sold"]).optional(),
-        }),
-        required: true,
-      },
+          )
+          .optional(),
+        status: z.enum(["available", "pending", "sold"]).optional(),
+      }),
       responses: {
         "201": {
           description: "Pet created",

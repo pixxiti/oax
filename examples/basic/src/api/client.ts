@@ -69,7 +69,7 @@ export const operations = {
     summary: "Add a new pet to the store.",
     description: "Add a new pet to the store.",
 
-    requestBody: { schema: Pet, required: true },
+    requestBody: Pet,
     response: Pet,
     responses: {
       "200": {
@@ -97,7 +97,7 @@ export const operations = {
     summary: "Update an existing pet.",
     description: "Update an existing pet by Id.",
 
-    requestBody: { schema: Pet, required: true },
+    requestBody: Pet,
     response: Pet,
     responses: {
       "200": {
@@ -127,7 +127,8 @@ export const operations = {
     path: "/pet/findByStatus",
     operationId: "findPetsByStatus",
     summary: "Finds Pets by status.",
-    description: "Multiple status values can be provided with comma separated strings.",
+    description:
+      "Multiple status values can be provided with comma separated strings.",
 
     queries: z.object({ status: z.enum(["available", "pending", "sold"]) }),
 
@@ -152,7 +153,8 @@ export const operations = {
     path: "/pet/findByTags",
     operationId: "findPetsByTags",
     summary: "Finds Pets by tags.",
-    description: "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
+    description:
+      "Multiple tags can be provided with comma separated strings. Use tag1, tag2, tag3 for testing.",
 
     queries: z.object({ tags: z.array(z.string()) }),
 
@@ -309,7 +311,7 @@ export const operations = {
     summary: "Place an order for a pet.",
     description: "Place a new order in the store.",
 
-    requestBody: { schema: Order, required: false },
+    requestBody: Order,
     response: Order,
     responses: {
       "200": {
@@ -335,7 +337,8 @@ export const operations = {
     path: "/store/order/{orderId}",
     operationId: "getOrderById",
     summary: "Find purchase order by ID.",
-    description: "For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.",
+    description:
+      "For valid response try integer IDs with value <= 5 or > 10. Other values will generate exceptions.",
     params: z.object({ orderId: z.number().int() }),
 
     response: Order,
@@ -363,7 +366,8 @@ export const operations = {
     path: "/store/order/{orderId}",
     operationId: "deleteOrder",
     summary: "Delete purchase order by identifier.",
-    description: "For valid response try integer IDs with value < 1000. Anything above 1000 or non-integers will generate API errors.",
+    description:
+      "For valid response try integer IDs with value < 1000. Anything above 1000 or non-integers will generate API errors.",
     params: z.object({ orderId: z.number().int() }),
 
     response: z.void(),
@@ -393,7 +397,7 @@ export const operations = {
     summary: "Create user.",
     description: "This can only be done by the logged in user.",
 
-    requestBody: { schema: User, required: false },
+    requestBody: User,
     response: User,
     responses: {
       "200": {
@@ -413,7 +417,7 @@ export const operations = {
     summary: "Creates list of users with given input array.",
     description: "Creates list of users with given input array.",
 
-    requestBody: { schema: createUsersWithListInput_Body, required: false },
+    requestBody: createUsersWithListInput_Body,
     response: User,
     responses: {
       "200": {
@@ -509,7 +513,7 @@ export const operations = {
     description: "This can only be done by the logged in user.",
     params: z.object({ username: z.string() }),
 
-    requestBody: { schema: User, required: false },
+    requestBody: User,
     response: z.void(),
     responses: {
       "200": {

@@ -27,7 +27,6 @@ interface ResponseInfo {
 
 interface SchemaReference {
   zodCode: string;
-  required: boolean;
 }
 
 function generateKyFunction(operation: OperationInfo): string {
@@ -58,7 +57,7 @@ function generateKyFunction(operation: OperationInfo): string {
   // Request body
   if (requestBody) {
     const bodyType = getTypeFromZodCode(requestBody.zodCode);
-    functionParams.push(`body${requestBody.required ? "" : "?"}: ${bodyType}`);
+    functionParams.push(`body: ${bodyType}`);
   }
 
   // Options parameter

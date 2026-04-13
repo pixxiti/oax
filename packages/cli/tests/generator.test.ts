@@ -79,10 +79,7 @@ describe("oax generator", () => {
     });
 
     it("should reference existing schema directly in requestBody instead of creating _Body alias", () => {
-      expect(clientCode).toContain("requestBody");
-      expect(clientCode).toContain("required: true");
-      // createPet's body is $ref NewPet — should use NewPet directly, not createPet_Body
-      expect(clientCode).toContain("requestBody: { schema: NewPet");
+      expect(clientCode).toContain("requestBody: NewPet");
       expect(clientCode).not.toContain("createPet_Body");
     });
   });
@@ -357,7 +354,7 @@ describe("oax generator", () => {
       const clientCode = await generateClient(testOAS);
       // Inline body needs a _Body export since there's no named schema to reference
       expect(clientCode).toContain("export const createItem_Body =");
-      expect(clientCode).toContain("requestBody: { schema: createItem_Body");
+      expect(clientCode).toContain("requestBody: createItem_Body");
     });
 
     it("should generate correct z.record syntax for additionalProperties", async () => {

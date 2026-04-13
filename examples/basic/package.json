@@ -12,7 +12,7 @@
     "check": "biome check .",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "generate": "node ../../packages/cli/dist/index.js generate -i https://petstore3.swagger.io/api/v3/openapi.json -o src/api/client.ts"
+    "generate": "node ../../packages/cli/dist/index.js generate-file -i https://petstore3.swagger.io/api/v3/openapi.json -o src/api/client.ts"
   },
   "dependencies": {
     "@pixxiti/oax-core": "workspace:*",

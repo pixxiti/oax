@@ -157,14 +157,11 @@ describe("createValidationHelpers", () => {
       params: z.object({}),
       queries: z.object({}),
       headers: z.object({}),
-      requestBody: {
-        schema: z.object({
-          name: z.string().min(1),
-          email: z.email(),
-          age: z.number().int().min(0).max(120),
-        }),
-        required: true,
-      },
+      requestBody: z.object({
+        name: z.string().min(1),
+        email: z.email(),
+        age: z.number().int().min(0).max(120),
+      }),
       responses: {
         "201": {
           description: "Created",
@@ -226,10 +223,7 @@ describe("createValidationHelpers", () => {
     it("should handle request body without schema gracefully", () => {
       const operationWithoutSchema: Operation = {
         ...operation,
-        requestBody: {
-          schema: null,
-          required: true,
-        },
+        requestBody: null,
       };
       const body = { someData: "test" };
 

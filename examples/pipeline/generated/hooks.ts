@@ -1,5 +1,5 @@
 // This file is auto-generated using oax. Do not edit manually.
-// Generated on: 2026-04-13T21:00:46.227Z
+// Generated on: 2026-04-13T21:44:48.345Z
 
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type {

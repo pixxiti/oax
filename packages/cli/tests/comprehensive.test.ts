@@ -183,7 +183,6 @@ describe("Comprehensive OAS 3.0 Features", () => {
     it("should generate operations with path parameters", () => {
       expect(clientCodeV4).toContain("userId");
       expect(clientCodeV4).toContain("params: z.object({ userId");
-      expect(clientCodeV4).toContain("required: true");
     });
 
     it("should generate request body schemas", () => {

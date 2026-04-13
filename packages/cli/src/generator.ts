@@ -123,7 +123,6 @@ interface ResponseInfo {
 
 interface SchemaReference {
   zodCode: string;
-  required: boolean;
 }
 
 /**
@@ -218,7 +217,6 @@ export function generateOperations(oas: OpenAPIV3.Document, options?: GeneratorO
         required: paramObj.required || false,
         schema: {
           zodCode: generateZodCodeFromSchema(paramObj.schema, options),
-          required: paramObj.required || false,
         },
       }));
 
@@ -239,7 +237,6 @@ export function generateOperations(oas: OpenAPIV3.Document, options?: GeneratorO
           if (content?.schema) {
             requestBody = {
               zodCode: generateZodCodeFromSchema(content.schema, options),
-              required: resolvedBody.required || false,
             };
           }
         }
@@ -265,7 +262,6 @@ export function generateOperations(oas: OpenAPIV3.Document, options?: GeneratorO
           if (content?.schema) {
             responseInfo.schema = {
               zodCode: generateZodCodeFromSchema(content.schema, options),
-              required: true,
             };
           }
 
@@ -332,7 +328,7 @@ export function generateOperationsCode(
             : sanitizeIdentifier(`${op.operationId}_Body`);
       }
       const requestBodyCode = op.requestBody
-        ? `requestBody: { schema: ${bodySchemaRef}, required: ${op.requestBody.required} },`
+        ? `requestBody: ${bodySchemaRef},`
         : "";
 
       const responsesCode = op.responses

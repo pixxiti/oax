@@ -18,11 +18,6 @@ export interface OperationParameter {
   schema: any;
 }
 
-export interface OperationRequestBody {
-  schema: any;
-  required: boolean;
-}
-
 export interface OperationResponse {
   description?: string;
   schema?: any;
@@ -37,7 +32,7 @@ export interface Operation {
   params?: any;
   queries?: any;
   headers?: any;
-  requestBody?: OperationRequestBody;
+  requestBody?: any;
   responses: Record<string, OperationResponse>;
 }
 
@@ -152,11 +147,11 @@ export function createValidationHelpers(): ValidationHelpers {
     },
 
     validateRequestBody: (body: unknown, operation: Operation) => {
-      if (!body || !operation.requestBody?.schema) {
+      if (!body || !operation.requestBody) {
         return body;
       }
 
-      const schema = operation.requestBody.schema;
+      const schema = operation.requestBody;
       if (typeof schema === "object" && "safeParse" in schema) {
         const result = (schema as ZodType).safeParse(body);
         if (!result.success) {
@@ -278,14 +273,8 @@ type InferOperationParams<T extends Operation> = [InferPathParams<T>] extends [n
           headers?: InferHeaderParams<T>;
         };
 
-type InferOperationBody<T extends Operation> = T["requestBody"] extends OperationRequestBody
-  ? T["requestBody"]["required"] extends true
-    ? T["requestBody"]["schema"] extends { _output: infer O }
-      ? O
-      : any
-    : T["requestBody"]["schema"] extends { _output: infer O }
-      ? O | undefined
-      : any | undefined
+type InferOperationBody<T extends Operation> = T["requestBody"] extends { _output: infer O }
+  ? O
   : never;
 
 // Helper to find the first 2xx success response
@@ -401,14 +390,14 @@ export type ErrorsById<T extends Operations, K extends keyof T> = T[K] extends O
 // Create typed client interface based on operations
 type TypedClient<T extends Operations> = {
   [K in keyof T]: T[K] extends Operation
-    ? T[K]["requestBody"] extends OperationRequestBody
-      ? (
+    ? InferOperationBody<T[K]> extends never
+      ? InferOperationParams<T[K]> extends never
+        ? () => Promise<InferOperationResponse<T[K]>>
+        : (inputs: InferOperationParams<T[K]>) => Promise<InferOperationResponse<T[K]>>
+      : (
           inputs: InferOperationParams<T[K]>,
           body: InferOperationBody<T[K]>
         ) => Promise<InferOperationResponse<T[K]>>
-      : InferOperationParams<T[K]> extends never
-        ? () => Promise<InferOperationResponse<T[K]>>
-        : (inputs: InferOperationParams<T[K]>) => Promise<InferOperationResponse<T[K]>>
     : never;
 } & {
   ky: typeof ky;

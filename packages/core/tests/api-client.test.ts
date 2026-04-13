@@ -65,14 +65,11 @@ const mockOperations: Operations = {
     params: z.object({}),
     queries: z.object({}),
     headers: z.object({}),
-    requestBody: {
-      schema: z.object({
-        name: z.string().min(1),
-        email: z.email(),
-        age: z.number().int().min(0),
-      }),
-      required: true,
-    },
+    requestBody: z.object({
+      name: z.string().min(1),
+      email: z.email(),
+      age: z.number().int().min(0),
+    }),
     responses: {
       "201": {
         description: "Created",

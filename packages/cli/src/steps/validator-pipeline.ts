@@ -166,11 +166,11 @@ export function createValidationHelpers(): ValidationHelpers {
     },
 
     validateRequestBody: (body: unknown, operation: Operation) => {
-      if (!body || !('requestBody' in operation) || !operation.requestBody?.schema) {
+      if (!body || !operation.requestBody) {
         return body;
       }
 
-      const schema = operation.requestBody.schema;
+      const schema = operation.requestBody;
       if (typeof schema === "object" && "safeParse" in schema) {
         const result = (schema as ZodType).safeParse(body);
         if (!result.success) {

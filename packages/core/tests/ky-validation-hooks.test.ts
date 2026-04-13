@@ -23,13 +23,10 @@ describe("createKyValidationHooks", () => {
     }),
     queries: z.object({}),
     headers: z.object({}),
-    requestBody: {
-      schema: z.object({
-        name: z.string().min(1),
-        email: z.email(),
-      }),
-      required: true,
-    },
+    requestBody: z.object({
+      name: z.string().min(1),
+      email: z.email(),
+    }),
     responses: {
       "200": {
         description: "Success",

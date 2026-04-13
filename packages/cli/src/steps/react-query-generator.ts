@@ -195,7 +195,7 @@ function extractOperationsFromSchemaCode(schemaCode: string): Map<string, Operat
 
   // Extract individual operations using regex patterns
   const operationPattern =
-    /(\w+):\s*\{[\s\S]*?method:\s*["'](\w+)["'][\s\S]*?operationId:\s*["'](\w+)["'][\s\S]*?params:\s*z\.object\(([\s\S]*?)\)[\s\S]*?queries:\s*z\.object\(([\s\S]*?)\)[\s\S]*?(?:requestBody:\s*\{\s*schema:\s*(\w+)[\s\S]*?\}[\s\S]*?)?responses:\s*\{[\s\S]*?["'](?:200|201)["']:\s*\{[\s\S]*?schema:\s*([^,\s}]+)/g;
+    /(\w+):\s*\{[\s\S]*?method:\s*["'](\w+)["'][\s\S]*?operationId:\s*["'](\w+)["'][\s\S]*?params:\s*z\.object\(([\s\S]*?)\)[\s\S]*?queries:\s*z\.object\(([\s\S]*?)\)[\s\S]*?(?:requestBody:\s*(\w+)[\s\S]*?)?responses:\s*\{[\s\S]*?["'](?:200|201)["']:\s*\{[\s\S]*?schema:\s*([^,\s}]+)/g;
 
   let match;
   match = operationPattern.exec(operationsMatch[1] ?? "");
