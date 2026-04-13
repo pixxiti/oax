@@ -37,19 +37,11 @@ type QueryParams<T extends Operations, K extends keyof T> = {
   params?: ParamsById<T, K> extends never ? undefined : ParamsById<T, K>;
   queries?: QueriesById<T, K> extends never ? undefined : QueriesById<T, K>;
   headers?: HeadersById<T, K> extends never ? undefined : HeadersById<T, K>;
-} extends { params?: undefined; queries?: undefined; headers?: undefined }
-  ? undefined
-  : {
-      params?: ParamsById<T, K> extends never ? undefined : ParamsById<T, K>;
-      queries?: QueriesById<T, K> extends never ? undefined : QueriesById<T, K>;
-      headers?: HeadersById<T, K> extends never ? undefined : HeadersById<T, K>;
-    };
+};
 
 type MutationParams<T extends Operations, K extends keyof T> = BodyById<T, K> extends never
   ? QueryParams<T, K>
-  : QueryParams<T, K> extends undefined
-    ? BodyById<T, K>
-    : QueryParams<T, K> & BodyById<T, K>;
+  : QueryParams<T, K> & BodyById<T, K>;
 
 // Body-only variables for when inputs are pre-bound at hook instantiation
 type MutateBodyVariables<T extends Operations, K extends keyof T> = BodyById<
