@@ -52,9 +52,13 @@ export function extractBodySchemas(
   return bodySchemas;
 }
 
-export async function generateClient(oas: OpenAPIV3.Document): Promise<string> {
-  const schemas = generateZodSchemas(oas);
-  const operations = generateOperations(oas);
+export interface GeneratorOptions {
+  zodVersion?: 3 | 4;
+}
+
+export async function generateClient(oas: OpenAPIV3.Document, options?: GeneratorOptions): Promise<string> {
+  const schemas = generateZodSchemas(oas, options);
+  const operations = generateOperations(oas, options);
   const schemaNames = new Set(schemas.map((s) => s.name));
   const allSchemas = [...schemas, ...extractBodySchemas(operations, schemaNames)];
   const schemaCode = generateSchemaCode(allSchemas);
@@ -165,7 +169,7 @@ function resolveResponse(
   return response as OpenAPIV3.ResponseObject;
 }
 
-export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
+export function generateOperations(oas: OpenAPIV3.Document, options?: GeneratorOptions): OperationInfo[] {
   const operations: OperationInfo[] = [];
 
   if (!oas.paths) return operations;
@@ -213,7 +217,7 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
         in: paramObj.in as ParameterInfo["in"],
         required: paramObj.required || false,
         schema: {
-          zodCode: generateZodCodeFromSchema(paramObj.schema),
+          zodCode: generateZodCodeFromSchema(paramObj.schema, options),
           required: paramObj.required || false,
         },
       }));
@@ -234,7 +238,7 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
           const content = resolvedBody.content?.["application/json"];
           if (content?.schema) {
             requestBody = {
-              zodCode: generateZodCodeFromSchema(content.schema),
+              zodCode: generateZodCodeFromSchema(content.schema, options),
               required: resolvedBody.required || false,
             };
           }
@@ -260,7 +264,7 @@ export function generateOperations(oas: OpenAPIV3.Document): OperationInfo[] {
 
           if (content?.schema) {
             responseInfo.schema = {
-              zodCode: generateZodCodeFromSchema(content.schema),
+              zodCode: generateZodCodeFromSchema(content.schema, options),
               required: true,
             };
           }
@@ -369,7 +373,7 @@ export function generateOperationsCode(
 export type Operations = typeof operations;`;
 }
 
-export function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
+export function generateZodSchemas(oas: OpenAPIV3.Document, options?: GeneratorOptions): ZodSchemaInfo[] {
   const schemas: ZodSchemaInfo[] = [];
 
   if (!oas.components?.schemas) return schemas;
@@ -377,7 +381,7 @@ export function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
   for (const [name, schema] of Object.entries(oas.components.schemas)) {
     if (!schema || typeof schema !== "object" || "$ref" in schema) continue;
 
-    const zodCode = generateZodCodeFromSchema(schema as OpenAPIV3.SchemaObject);
+    const zodCode = generateZodCodeFromSchema(schema as OpenAPIV3.SchemaObject, options);
 
     schemas.push({
       name: sanitizeIdentifier(name),
@@ -389,7 +393,7 @@ export function generateZodSchemas(oas: OpenAPIV3.Document): ZodSchemaInfo[] {
   return schemas;
 }
 
-function generateZodCodeFromSchema(schema: any): string {
+function generateZodCodeFromSchema(schema: any, options?: GeneratorOptions): string {
   if (!schema) return "z.any()";
 
   // Handle $ref
@@ -400,7 +404,7 @@ function generateZodCodeFromSchema(schema: any): string {
 
   // Handle composition operators (allOf, anyOf, oneOf)
   if (schema.allOf) {
-    const schemas = schema.allOf.map((s: any) => generateZodCodeFromSchema(s));
+    const schemas = schema.allOf.map((s: any) => generateZodCodeFromSchema(s, options));
     if (schemas.length === 1) {
       return schemas[0];
     }
@@ -410,12 +414,12 @@ function generateZodCodeFromSchema(schema: any): string {
   }
 
   if (schema.anyOf) {
-    const schemas = schema.anyOf.map((s: any) => generateZodCodeFromSchema(s));
+    const schemas = schema.anyOf.map((s: any) => generateZodCodeFromSchema(s, options));
     return `z.union([${schemas.join(", ")}])`;
   }
 
   if (schema.oneOf) {
-    const schemas = schema.oneOf.map((s: any) => generateZodCodeFromSchema(s));
+    const schemas = schema.oneOf.map((s: any) => generateZodCodeFromSchema(s, options));
     // Handle discriminated unions if discriminator is present
     if (schema.discriminator) {
       return `z.discriminatedUnion("${schema.discriminator.propertyName}", [${schemas.join(", ")}])`;
@@ -425,15 +429,15 @@ function generateZodCodeFromSchema(schema: any): string {
 
   // Handle nullable
   const isNullable = schema.nullable === true;
-  const baseSchema = generateBaseZodSchema(schema);
+  const baseSchema = generateBaseZodSchema(schema, options);
 
   return isNullable ? `${baseSchema}.nullable()` : baseSchema;
 }
 
-function generateBaseZodSchema(schema: any): string {
+function generateBaseZodSchema(schema: any, options?: GeneratorOptions): string {
   switch (schema.type) {
     case "string":
-      return generateStringSchema(schema);
+      return generateStringSchema(schema, options);
     case "number":
       return generateNumberSchema(schema);
     case "integer":
@@ -441,15 +445,15 @@ function generateBaseZodSchema(schema: any): string {
     case "boolean":
       return "z.boolean()";
     case "array":
-      return generateArraySchema(schema);
+      return generateArraySchema(schema, options);
     case "object":
-      return generateObjectSchema(schema);
+      return generateObjectSchema(schema, options);
     default:
       return "z.any()";
   }
 }
 
-function generateStringSchema(schema: any): string {
+function generateStringSchema(schema: any, options?: GeneratorOptions): string {
   let zodSchema = "z.string()";
 
   // Handle enums
@@ -458,10 +462,11 @@ function generateStringSchema(schema: any): string {
   }
 
   // Handle string formats
+  const v4 = options?.zodVersion !== 3;
   if (schema.format) {
     switch (schema.format) {
       case "date-time":
-        return "z.iso.datetime()";
+        return v4 ? "z.iso.datetime()" : "z.string().datetime()";
       case "date":
         zodSchema += ".date()";
         break;
@@ -469,10 +474,10 @@ function generateStringSchema(schema: any): string {
         zodSchema += ".time()";
         break;
       case "email":
-        return "z.email()";
+        return v4 ? "z.email()" : "z.string().email()";
       case "uri":
       case "url":
-        return "z.url()";
+        return v4 ? "z.url()" : "z.string().url()";
       case "uuid":
         zodSchema += ".uuid()";
         break;
@@ -566,10 +571,10 @@ function generateIntegerSchema(schema: any): string {
   return zodSchema;
 }
 
-function generateArraySchema(schema: any): string {
+function generateArraySchema(schema: any, options?: GeneratorOptions): string {
   let itemSchema = "z.any()";
   if (schema.items) {
-    itemSchema = generateZodCodeFromSchema(schema.items);
+    itemSchema = generateZodCodeFromSchema(schema.items, options);
   }
 
   let zodSchema = `z.array(${itemSchema})`;
@@ -589,7 +594,7 @@ function generateArraySchema(schema: any): string {
   return zodSchema;
 }
 
-function generateObjectSchema(schema: any): string {
+function generateObjectSchema(schema: any, options?: GeneratorOptions): string {
   if (!schema.properties) {
     // Handle additionalProperties for record-like objects
     if (schema.additionalProperties === false) {
@@ -599,7 +604,7 @@ function generateObjectSchema(schema: any): string {
       return "z.record(z.string(), z.any())";
     }
     if (typeof schema.additionalProperties === "object") {
-      const valueSchema = generateZodCodeFromSchema(schema.additionalProperties);
+      const valueSchema = generateZodCodeFromSchema(schema.additionalProperties, options);
       return `z.record(z.string(), ${valueSchema})`;
     }
     return "z.record(z.string(), z.any())";
@@ -608,7 +613,7 @@ function generateObjectSchema(schema: any): string {
   const properties = Object.entries(schema.properties)
     .map(([name, prop]: [string, any]) => {
       const isRequired = schema.required?.includes(name) || false;
-      const zodCode = generateZodCodeFromSchema(prop);
+      const zodCode = generateZodCodeFromSchema(prop, options);
       const optionalSuffix = isRequired ? "" : ".optional()";
 
       // Handle deprecated properties with description
