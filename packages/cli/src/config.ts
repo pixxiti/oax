@@ -19,9 +19,9 @@ export interface ConfigDefinition {
 }
 
 /**
- * Creates a pipeline configuration
+ * Creates a pipeline configuration for `oax build`.
  */
-export function defineConfig(config: ConfigDefinition): PipelineConfig {
+export function definePipelineConfig(config: ConfigDefinition): PipelineConfig {
   const result: PipelineConfig = {
     outputDir: config.outputDir || "oax",
     steps: config.steps,
