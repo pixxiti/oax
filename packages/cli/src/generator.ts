@@ -15,7 +15,7 @@ export function sanitizeIdentifier(name: string): string {
 }
 
 function escapeStringLiteral(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 export async function parseOAS(filePath: string): Promise<OpenAPIV3.Document> {
@@ -335,7 +335,7 @@ export function generateOperationsCode(
         .map(
           (r) => `
     '${r.status}': {
-      description: ${r.description ? `\`${escapeStringLiteral(r.description)}\`` : "undefined"},
+      description: ${r.description ? `"${escapeStringLiteral(r.description)}"` : "undefined"},
       schema: ${r.schema ? r.schema.zodCode : "z.void()"}
     }`
         )
@@ -350,8 +350,8 @@ export function generateOperationsCode(
     method: '${op.method}',
     path: '${op.path}',
     operationId: '${op.operationId}',
-    summary: ${op.summary ? `\`${escapeStringLiteral(op.summary)}\`` : "undefined"},
-    description: ${op.description ? `\`${escapeStringLiteral(op.description)}\`` : "undefined"},
+    summary: ${op.summary ? `"${escapeStringLiteral(op.summary)}"` : "undefined"},
+    description: ${op.description ? `"${escapeStringLiteral(op.description)}"` : "undefined"},
     ${pathParamsCode ? `params: ${pathParamsCode},` : ""}
     ${queryParamsCode ? `queries: ${queryParamsCode},` : ""}
     ${headerParamsCode ? `headers: ${headerParamsCode},` : ""}
