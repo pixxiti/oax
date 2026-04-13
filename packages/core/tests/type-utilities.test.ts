@@ -230,7 +230,8 @@ describe("Type Utilities", () => {
     it("should handle operations with optional query parameters", () => {
       type CreateUserParams = ParamsById<typeof testOperations, "createUser">;
 
-      expectTypeOf<CreateUserParams>().toEqualTypeOf<never>();
+      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
+      expectTypeOf<CreateUserParams>().toEqualTypeOf<{}>();
     });
 
     it("should handle operations with mixed required and optional parameters", () => {
@@ -245,7 +246,8 @@ describe("Type Utilities", () => {
     it("should return never for operations with no parameters", () => {
       type NoParamsParams = ParamsById<typeof testOperations, "noParams">;
 
-      expectTypeOf<NoParamsParams>().toEqualTypeOf<never>();
+      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
+      expectTypeOf<NoParamsParams>().toEqualTypeOf<{}>();
     });
   });
 
@@ -269,13 +271,15 @@ describe("Type Utilities", () => {
     it("should return never for operations without query parameters", () => {
       type DeleteUserQueries = QueriesById<typeof testOperations, "deleteUser">;
 
-      expectTypeOf<DeleteUserQueries>().toEqualTypeOf<never>();
+      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
+      expectTypeOf<DeleteUserQueries>().toEqualTypeOf<{}>();
     });
 
     it("should handle mixed parameter types and extract only queries", () => {
       type UpdateUserQueries = QueriesById<typeof testOperations, "updateUser">;
 
-      expectTypeOf<UpdateUserQueries>().toEqualTypeOf<never>();
+      // TODO(task-4): once z.object({}) fixtures are removed, this will resolve to never
+      expectTypeOf<UpdateUserQueries>().toEqualTypeOf<{}>();
     });
   });
 
@@ -432,9 +436,9 @@ describe("Type Utilities", () => {
         };
       }>();
 
-      expectTypeOf<GetUserParams>().toEqualTypeOf<{
-        id: string;
-      }>();
+      // TODO(task-4): once z.object({}) fixtures are removed, createUser won't have params
+      // and this union will resolve to { id: string } | never = { id: string }
+      expectTypeOf<GetUserParams>().toEqualTypeOf<{ id: string } | {}>();
 
       // Union types with these utilities are not currently supported
       // and may result in unexpected behavior - this is a known limitation
@@ -544,6 +548,22 @@ describe("Type Utilities", () => {
 
       type Queries = QueriesById<typeof noParamsOps, "listItems">;
       expectTypeOf<Queries>().toEqualTypeOf<{ limit: number }>();
+    });
+
+    it("should return never for ParamsById when params field is completely absent", () => {
+      const ops = {
+        noParamsOp: {
+          operationId: "noParamsOp",
+          method: "get",
+          path: "/test",
+          responses: {
+            "200": { description: "OK", schema: z.object({ ok: z.boolean() }) },
+          },
+        },
+      } as const satisfies Operations;
+
+      type P = ParamsById<typeof ops, "noParamsOp">;
+      expectTypeOf<P>().toEqualTypeOf<never>();
     });
   });
 

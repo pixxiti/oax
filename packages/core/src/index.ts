@@ -341,10 +341,8 @@ export type InputsById<T extends Operations, K extends keyof T> = T[K] extends O
 
 export type QueriesById<T extends Operations, K extends keyof T> = T[K] extends Operation
   ? T[K]["queries"] extends { _output: infer O }
-    ? O extends Record<string, never>
-      ? never
-      : O
-    : any
+    ? O
+    : never
   : never;
 
 export type ResponseById<T extends Operations, K extends keyof T> = T[K] extends Operation
@@ -378,9 +376,7 @@ export type ServerErrorsById<T extends Operations, K extends keyof T> = T[K] ext
 
 export type ParamsById<T extends Operations, K extends keyof T> = T[K] extends Operation
   ? T[K]["params"] extends { _output: infer O }
-    ? O extends Record<string, never>
-      ? never
-      : O
+    ? O
     : never
   : never;
 
