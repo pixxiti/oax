@@ -304,7 +304,7 @@ export function generateOperationsCode(
 
       // Generate parameter objects for each type
       const generateParamObject = (params: ParameterInfo[]) => {
-        if (params.length === 0) return "z.object({})";
+        if (params.length === 0) return null;
 
         const properties = params
           .map((p) => `${p.name}: ${p.schema.zodCode}${p.required ? "" : ".optional()"}`)
@@ -352,9 +352,9 @@ export function generateOperationsCode(
     operationId: '${op.operationId}',
     summary: ${op.summary ? `\`${escapeStringLiteral(op.summary)}\`` : "undefined"},
     description: ${op.description ? `\`${escapeStringLiteral(op.description)}\`` : "undefined"},
-    params: ${pathParamsCode},
-    queries: ${queryParamsCode},
-    headers: ${headerParamsCode},
+    ${pathParamsCode ? `params: ${pathParamsCode},` : ""}
+    ${queryParamsCode ? `queries: ${queryParamsCode},` : ""}
+    ${headerParamsCode ? `headers: ${headerParamsCode},` : ""}
     ${requestBodyCode}
     response: ${responseCode},
     responses: {${responsesCode}

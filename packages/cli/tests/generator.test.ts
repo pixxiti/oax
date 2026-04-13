@@ -98,10 +98,33 @@ describe("oax generator", () => {
       expect(clientCode).toContain("method:");
       expect(clientCode).toContain("path:");
       expect(clientCode).toContain("operationId:");
-      expect(clientCode).toContain("params:");
-      expect(clientCode).toContain("queries:");
-      expect(clientCode).toContain("headers:");
+      // params/queries/headers are only emitted when the operation has relevant parameters
+      expect(clientCode).toContain("params: z.object({ petId");
+      expect(clientCode).toContain("queries: z.object({ limit");
       expect(clientCode).toContain("responses:");
+    });
+
+    it("should omit params/queries/headers fields when operation has none of that type", async () => {
+      const testOAS: OpenAPIV3.Document = {
+        openapi: "3.0.3",
+        info: { title: "Test API", version: "1.0.0" },
+        paths: {
+          "/items": {
+            get: {
+              operationId: "listItems",
+              responses: {
+                "200": { description: "OK" },
+              },
+            },
+          },
+        },
+      };
+
+      const clientCode = await generateClient(testOAS);
+      // Operation with no parameters at all should not emit params, queries, or headers
+      expect(clientCode).not.toContain("params:");
+      expect(clientCode).not.toContain("queries:");
+      expect(clientCode).not.toContain("headers:");
     });
 
     it("should resolve $ref parameters", async () => {
