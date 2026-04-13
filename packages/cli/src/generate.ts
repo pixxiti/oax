@@ -41,11 +41,16 @@ function mergeOptions(
   configOptions: BuildOptions,
   manifestOptions?: BuildOptions
 ): Required<BuildOptions> {
-  return {
-    ...DEFAULT_BUILD_OPTIONS,
-    ...configOptions,
-    ...manifestOptions,
-  } as Required<BuildOptions>;
+  const merged = { ...DEFAULT_BUILD_OPTIONS };
+  for (const [key, value] of Object.entries(configOptions)) {
+    if (value !== undefined) (merged as Record<string, unknown>)[key] = value;
+  }
+  if (manifestOptions) {
+    for (const [key, value] of Object.entries(manifestOptions)) {
+      if (value !== undefined) (merged as Record<string, unknown>)[key] = value;
+    }
+  }
+  return merged;
 }
 
 // ─── Process single manifest ────────────────────────────────────────────────
@@ -146,11 +151,11 @@ export async function generate(options: GenerateOptions): Promise<GenerateResult
   let manifests = options.manifests;
   if (filter) {
     manifests = manifests.filter((entry) => {
-      const resolved =
+      const name =
         typeof entry.manifest.input === "function"
-          ? entry.manifest.input({ sources: config?.sources ?? {} })
-          : entry.manifest.input;
-      return resolved.name === filter;
+          ? resolveManifest(entry.manifest, config?.sources ?? {}).name
+          : entry.manifest.input.name;
+      return name === filter;
     });
   }
 

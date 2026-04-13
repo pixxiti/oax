@@ -2,7 +2,7 @@
 import * as path from "path";
 import { Command } from "commander";
 import * as fs from "fs/promises";
-import { defaultConfigPath, discoverManifests, loadConfig, loadManifest } from "./discovery";
+import { discoverManifests, loadConfig, loadManifest } from "./discovery";
 import { type GenerateResult, generate } from "./generate";
 import { generateClient, parseOAS } from "./generator";
 import { Pipeline, loadPipelineConfig } from "./pipeline";
