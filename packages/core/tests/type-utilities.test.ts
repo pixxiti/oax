@@ -503,6 +503,50 @@ describe("Type Utilities", () => {
     });
   });
 
+  describe("Optional params/queries/headers", () => {
+    it("should accept operations without params, queries, or headers", () => {
+      const minimalOps = {
+        healthCheck: {
+          operationId: "healthCheck",
+          method: "get",
+          path: "/health",
+          responses: {
+            "200": {
+              description: "OK",
+              schema: z.object({ status: z.string() }),
+            },
+          },
+        },
+      } as const satisfies Operations;
+
+      type HealthResponse = ResponseById<typeof minimalOps, "healthCheck">;
+      expectTypeOf<HealthResponse>().toEqualTypeOf<{ status: string }>();
+    });
+
+    it("should infer never for ParamsById when params field is absent", () => {
+      const noParamsOps = {
+        listItems: {
+          operationId: "listItems",
+          method: "get",
+          path: "/items",
+          queries: z.object({ limit: z.number() }),
+          responses: {
+            "200": {
+              description: "OK",
+              schema: z.array(z.string()),
+            },
+          },
+        },
+      } as const satisfies Operations;
+
+      type Params = ParamsById<typeof noParamsOps, "listItems">;
+      expectTypeOf<Params>().toEqualTypeOf<never>();
+
+      type Queries = QueriesById<typeof noParamsOps, "listItems">;
+      expectTypeOf<Queries>().toEqualTypeOf<{ limit: number }>();
+    });
+  });
+
   describe("Integration with Zod Schemas", () => {
     it("should properly infer complex nested zod types", () => {
       const complexOperation = {

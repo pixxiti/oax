@@ -36,9 +36,9 @@ export interface Operation {
   operationId: string;
   summary?: string;
   description?: string;
-  params: any;
-  queries: any;
-  headers: any;
+  params?: any;
+  queries?: any;
+  headers?: any;
   requestBody?: OperationRequestBody;
   responses: Record<string, OperationResponse>;
 }
