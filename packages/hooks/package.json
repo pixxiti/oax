@@ -1,6 +1,6 @@
 {
   "name": "@pixxiti/oax-hooks",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "React Query v5 hooks for oax API clients",
   "type": "module",
   "main": "./dist/index.js",
