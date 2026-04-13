@@ -1,6 +1,6 @@
 {
   "name": "@pixxiti/oax-cli",
-  "version": "1.1.3",
+  "version": "1.2.0",
   "description": "CLI tool for generating typed API clients from OpenAPI specifications",
   "type": "module",
   "main": "./dist/exports.js",
