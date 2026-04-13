@@ -117,7 +117,11 @@ Both the output directory (`_client`) and filename (`schemas.ts`) are configurab
 // ─── Source ─────────────────────────────────────────────────────────────────
 
 interface Source {
-  /** Path to OpenAPI spec — relative path, absolute path, or bare specifier (npm package) */
+  /**
+   * Path to OpenAPI spec.
+   * - Paths starting with `@` are resolved as node_modules (e.g. `@fastly/security-api-oas/dist/openapi.yaml`)
+   * - All other paths are resolved relative to the project root
+   */
   path: string;
   /** Shell command to preprocess the spec before parsing */
   preprocessor?: string;
@@ -204,8 +208,8 @@ oax generate
 │     │     → execFileSync the command
 │     │
 │     ├─ d. Resolve spec paths
-│     │     → Bare specifiers: resolve via node_modules
-│     │     → Relative paths: resolve from project root
+│     │     → `@`-prefixed paths: resolve via node_modules (scoped packages)
+│     │     → All other paths: resolve relative to project root
 │     │
 │     ├─ e. Filter operations (if filter defined)
 │     │     → Parse spec YAML, keep matching operations
@@ -250,6 +254,124 @@ oax generate
 | _(new)_ | `oax generate` — manifest-driven generation |
 | `oax build` | `oax build` — unchanged |
 
+## Path Resolution
+
+Source paths use a simple convention:
+
+- **`@`-prefixed** → node_modules resolution. `@fastly/security-api-oas/dist/openapi.yaml` resolves to `<project_root>/node_modules/@fastly/security-api-oas/dist/openapi.yaml`.
+- **Everything else** → resolved relative to project root. `src/lib/oas-specs/ddos.yaml` resolves to `<project_root>/src/lib/oas-specs/ddos.yaml`.
+
+```ts
+function resolveSpecPath(specPath: string, projectRoot: string): string {
+  if (specPath.startsWith("@")) {
+    return path.resolve(projectRoot, "node_modules", specPath);
+  }
+  return path.resolve(projectRoot, specPath);
+}
+```
+
+## Tests
+
+Tests use vitest (consistent with existing `@oax/cli` tests).
+
+### Unit tests
+
+**`packages/cli/tests/manifest.test.ts`**
+- `defineManifest` with plain object returns a manifest
+- `defineManifest` with function form returns a manifest when called with sources
+- Manifest options override config defaults
+- Missing required fields (name, sources) throw
+
+**`packages/cli/tests/discovery.test.ts`**
+- Discovers `oax.manifest.ts` files recursively
+- Skips `node_modules` and `dist` directories
+- Loads `oax.config.ts` from project root
+- Returns empty array when no manifests found
+- Works without a config file (config is optional)
+
+**`packages/cli/tests/config.test.ts`**
+- `defineConfig` returns config with sources and options
+- Default options are applied when not specified
+- Sources map is preserved as-is
+
+**`packages/cli/tests/spec-resolver.test.ts`**
+- `@`-prefixed paths resolve via node_modules
+- Relative paths resolve from project root
+- Operation filtering keeps matching operations and their transitive $refs
+- Operation filtering removes non-matching operations and orphaned components
+- Multi-source merging combines paths and components
+- Preprocessor is executed before spec resolution
+- Temp files are cleaned up after processing
+
+### Integration tests
+
+**`packages/cli/tests/generate.test.ts`**
+- End-to-end: config + manifest → generated `_client/schemas.ts`
+- Multiple manifests discovered and generated in parallel
+- Manifest with `--filter` flag only generates matching names
+- Function-form manifest receives sources from config
+- Object-form manifest works without config
+- Custom `outputDir` and `outputFile` respected
+- Clear error when function-form manifest used without config
+- Clear error when source key not found in config
+
+### Test fixtures
+
+- `packages/cli/tests/fixtures/` — already has `petstore.json`, reuse for manifest tests
+- `packages/cli/tests/fixtures/manifests/` — sample config and manifest files for discovery/integration tests
+
+## API Documentation
+
+Inline JSDoc on all public exports (`defineConfig`, `defineManifest`, `Source`, `BuildOptions`, `ManifestInput`, `ConfigInput`). Plus a usage guide at the package level.
+
+**`packages/cli/README.md`** — usage guide covering:
+
+### Quick start
+
+```bash
+npm install @oax/cli
+```
+
+1. Create `oax.config.ts` at project root:
+
+```ts
+import { defineConfig } from "@oax/cli";
+
+export default defineConfig({
+  sources: {
+    petstore: { path: "specs/petstore.yaml" },
+  },
+});
+```
+
+2. Create `oax.manifest.ts` next to your resource:
+
+```ts
+import { defineManifest } from "@oax/cli";
+
+export default defineManifest(({ sources }) => ({
+  name: "petstore",
+  sources: [sources.petstore],
+}));
+```
+
+3. Run generation:
+
+```bash
+npx oax generate
+```
+
+### Sections
+
+- **Config reference** — all `BuildOptions` fields with defaults
+- **Source paths** — `@`-prefixed = node_modules, everything else = relative to project root
+- **Manifest forms** — function vs object, when to use each
+- **Filtering operations** — `filter` function with examples
+- **Multiple sources** — merging multiple specs into one client
+- **Preprocessors** — shell commands for spec transformation
+- **Custom output** — `outputDir` and `outputFile` options
+- **CLI flags** — `-c`, `--filter`
+
 ## Scope
 
 ### In scope
@@ -257,13 +379,15 @@ oax generate
 - `defineConfig` and `defineManifest` exports from `@oax/cli`
 - Config loading (auto-discover `oax.config.ts` at project root)
 - Manifest discovery (walk project for `oax.manifest.ts`)
-- Spec path resolution (bare specifiers, relative paths)
+- Spec path resolution (`@`-prefixed = node_modules, else relative to project root)
 - Operation filtering with transitive $ref collection
 - Multi-source spec merging
 - Preprocessor support
 - `oax generate` CLI command
 - Rename old `oax generate` to `oax generate-file`
 - Per-manifest error reporting
+- Unit and integration tests
+- API documentation (JSDoc + README usage guide)
 
 ### Out of scope
 
@@ -279,6 +403,12 @@ oax generate
 - `packages/cli/src/manifest.ts` — `defineManifest`, `Manifest`, `ManifestInput`, `ManifestContext` types, manifest resolution logic
 - `packages/cli/src/discovery.ts` — manifest file discovery (walk project tree), config loading
 - `packages/cli/src/spec-resolver.ts` — spec path resolution, filtering, merging, preprocessor execution, temp file management
+- `packages/cli/tests/manifest.test.ts` — unit tests for defineManifest
+- `packages/cli/tests/discovery.test.ts` — unit tests for manifest/config discovery
+- `packages/cli/tests/spec-resolver.test.ts` — unit tests for path resolution, filtering, merging
+- `packages/cli/tests/generate.test.ts` — integration tests for end-to-end generation
+- `packages/cli/tests/fixtures/manifests/` — test fixture config and manifest files
+- `packages/cli/README.md` — API documentation and usage guide
 
 ### Modified files
 
