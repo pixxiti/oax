@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { tsImport } from "tsx/esm/api";
 import type { Config, Manifest } from "./manifest";
 
 const SKIP_DIRS = new Set(["node_modules", "dist", ".git"]);
@@ -41,7 +42,7 @@ export async function loadConfig(configPath: string): Promise<Config | null> {
     return null;
   }
 
-  const mod = await import(configPath);
+  const mod = await tsImport(configPath, import.meta.url);
   return (mod.default ?? mod) as Config;
 }
 
@@ -49,7 +50,7 @@ export async function loadConfig(configPath: string): Promise<Config | null> {
  * Loads a manifest module from the given file path.
  */
 export async function loadManifest(filePath: string): Promise<Manifest> {
-  const mod = await import(filePath);
+  const mod = await tsImport(filePath, import.meta.url);
   const manifest = mod.default ?? mod;
 
   if (!manifest || manifest.__type !== "oax-manifest") {
