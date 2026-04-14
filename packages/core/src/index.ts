@@ -532,7 +532,7 @@ export class ApiClient {
   }
 
   extend(options: Options | ((parentOptions: Options) => Options)) {
-    this.ky = ky.extend(options);
+    this.ky = this.ky.extend(options);
   }
 
   // Dynamic method creation - operations will be bound at runtime

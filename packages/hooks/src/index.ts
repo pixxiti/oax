@@ -2,6 +2,7 @@ import {
   type QueryKey,
   type UseMutationOptions,
   type UseQueryOptions,
+  useInfiniteQuery as useReactInfiniteQuery,
   useMutation,
   useQuery,
 } from "@tanstack/react-query";
@@ -315,6 +316,79 @@ export function createHooks<const T extends Operations>(
   }
 
   hooks.getKey = createGetKeyFunction(apiName, operations);
+
+  /**
+   * Zodios-compatible useInfiniteQuery.
+   *
+   * @param path  – API path using `:param` or `{param}` placeholders
+   * @param inputs – { params?, queries?, headers? }
+   * @param options – { getPageParamList, getNextPageParam, ...reactQueryOptions }
+   */
+  hooks.useInfiniteQuery = (path: string, inputs: any, options: any = {}) => {
+    const { getPageParamList, getNextPageParam, ...queryOptions } = options;
+
+    // Normalize input path from :param → {param} to match operation definitions
+    const normalizedInputPath = path.replace(/:([^/]+)/g, "{$1}");
+
+    let matchedOperationId: string | undefined;
+    let matchedOperation: Operation | undefined;
+
+    for (const [opId, op] of Object.entries(operations)) {
+      if (op && typeof op === "object" && "path" in op && "method" in op) {
+        const typedOp = op as Operation;
+        if (typedOp.method === "get" && typedOp.path === normalizedInputPath) {
+          matchedOperationId = opId;
+          matchedOperation = typedOp;
+          break;
+        }
+      }
+    }
+
+    if (!matchedOperationId || !matchedOperation) {
+      throw new Error(`No GET operation found for path: ${path}`);
+    }
+
+    // Build query key excluding pagination params so all pages share one cache entry
+    const pageParamNames: string[] = getPageParamList?.() ?? [];
+    const keyInputs = inputs
+      ? {
+          ...inputs,
+          queries: inputs.queries
+            ? Object.fromEntries(
+                Object.entries(inputs.queries).filter(
+                  ([key]) => !pageParamNames.includes(key),
+                ),
+              )
+            : undefined,
+        }
+      : undefined;
+
+    const queryKey = generateQueryKey(
+      apiName,
+      matchedOperationId,
+      matchedOperation,
+      keyInputs,
+    );
+
+    const opId = matchedOperationId;
+
+    return useReactInfiniteQuery({
+      queryKey,
+      queryFn: async ({ pageParam }: { pageParam: any }) => {
+        const mergedInputs = {
+          ...inputs,
+          queries: {
+            ...inputs?.queries,
+            ...(pageParam?.queries ?? {}),
+          },
+        };
+        return client[opId](mergedInputs);
+      },
+      initialPageParam: undefined,
+      getNextPageParam: getNextPageParam ?? (() => undefined),
+      ...queryOptions,
+    });
+  };
 
   return hooks;
 }
